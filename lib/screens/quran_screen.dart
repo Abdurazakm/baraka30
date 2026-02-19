@@ -191,6 +191,22 @@ class _QuranScreenState extends State<QuranScreen> {
     }
   }
 
+  void _jumpToBookmark() {
+    if (_bookmarkedPage <= 0) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No bookmark saved yet.')),
+        );
+      }
+      return;
+    }
+
+    _pageController.jumpToPage(_bookmarkedPage - 1);
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+  }
+
   void _jumpToPage(int pageNum) {
     _pageController.jumpToPage(pageNum - 1);
     if (Navigator.canPop(context)) Navigator.pop(context);
@@ -208,6 +224,11 @@ class _QuranScreenState extends State<QuranScreen> {
         title: Text("Page $_currentPage", 
             style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_added_outlined),
+            tooltip: 'Go to Bookmark',
+            onPressed: _jumpToBookmark,
+          ),
           IconButton(
             icon: Icon(_showTranslation ? Icons.g_translate : Icons.translate_outlined),
             onPressed: _toggleTranslation,
@@ -535,6 +556,15 @@ class _QuranScreenState extends State<QuranScreen> {
               ),
             ),
           ),
+          ListTile(
+            leading: const Icon(Icons.bookmark),
+            title: const Text('Go to Bookmark'),
+            subtitle: Text(
+              _bookmarkedPage > 0 ? 'Page $_bookmarkedPage' : 'No bookmark saved',
+            ),
+            onTap: _jumpToBookmark,
+          ),
+          const Divider(height: 1),
           Expanded(
             child: ListView.builder(
               padding: EdgeInsets.zero,
