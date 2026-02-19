@@ -152,7 +152,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
               child: LinearProgressIndicator(
                 value: (_counter % 33) / 33,
                 minHeight: 10,
-                backgroundColor: theme.colorScheme.surfaceVariant,
+                backgroundColor: theme.colorScheme.surfaceContainerHighest,
               ),
             ),
           ),

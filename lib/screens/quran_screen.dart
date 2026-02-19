@@ -233,101 +233,186 @@ class _QuranScreenState extends State<QuranScreen> {
       bottomNavigationBar: _buildStatusBar(),
     );
   }
-
-  Widget _buildMushafPage(int pageNum) {
-  final dynamic pageData = Quran.getSurahVersesInPageAsList(pageNum);
-
-  if (pageData == null) {
-    return const Center(child: Text("Page not found"));
+  Widget _buildBismillah() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.only(bottom: 16.0),
+      // OPTION 1: Using an Image or SVG (Uncomment to use)
+      /*
+      child: Image.asset(
+        'assets/images/bismillah.png', // Path to your vector/image
+        height: 40,
+        color: Colors.black87, // Tints the vector to match your text
+      ),
+      */
+      
+      // OPTION 2: Using standard text with your Uthmanic font
+      // (Using this as default so your code works immediately)
+      child: const Text(
+        "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontFamily: 'Uthmanic', // Uses your beautiful Mushaf font
+          fontSize: 26,
+          color: Colors.black87,
+        ),
+      ),
+    );
   }
 
-  return LayoutBuilder(
-    builder: (context, constraints) {
-      final double screenWidth = constraints.maxWidth;
-      final double screenHeight = constraints.maxHeight;
+  Widget _buildMushafPage(int pageNum) {
+    final dynamic pageData = Quran.getSurahVersesInPageAsList(pageNum);
 
-      // Dynamic responsive font sizing
-      final double arabicFontSize = screenWidth * 0.065;
-      final double translationFontSize = screenWidth * 0.035;
+    if (pageData == null) {
+      return const Center(child: Text("Page not found"));
+    }
 
-      return Container(
-        width: screenWidth,
-        height: screenHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFBF9F1),
-          border: Border.all(
-            color: Colors.brown.withOpacity(0.15),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double screenWidth = constraints.maxWidth;
+        final double screenHeight = constraints.maxHeight;
+
+        // Dynamic responsive font sizing
+        // Scales font based on height to approximate 15 lines in Mushaf Mode
+        final double mushafFontSize = (screenHeight * 0.75) / 15;
+        final double translationFontSize = screenWidth * 0.035;
+
+        return Container(
+          width: screenWidth,
+          height: screenHeight,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFBF9F1),
+            border: Border.all(
+              color: Colors.brown.withOpacity(0.15),
+            ),
           ),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: (pageData as List).map((surahInPage) {
-              final versesList = surahInPage!.verses!.values.toList();
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (versesList.isNotEmpty &&
-                      versesList.first.verseNumber == 1)
-                    _buildSurahHeader(surahInPage.surahNumber!),
-
-                  RichText(
-                    textAlign: TextAlign.justify,
-                    textDirection: TextDirection.rtl,
-                    text: TextSpan(
-                      children: versesList.map<InlineSpan>((v) {
-                        final translation = _showTranslation
-                            ? Quran.getVerse(
-                                surahNumber:
-                                    surahInPage.surahNumber!,
-                                verseNumber: v.verseNumber,
-                                language: QuranLanguage.english,
-                              ).text
-                            : null;
-
-                        return TextSpan(
-                          children: [
-                            TextSpan(
-                              text: "${v.text} ",
-                              style: TextStyle(
-                                fontFamily: 'Uthmanic',
-                                fontSize: arabicFontSize,
-                                height: 2.0,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            WidgetSpan(
-                              alignment: PlaceholderAlignment.middle,
-                              child: _buildAyahEnd(v.verseNumber),
-                            ),
-                            if (translation != null)
-                              TextSpan(
-                                text: "\n$translation\n",
-                                style: TextStyle(
-                                  fontSize: translationFontSize,
-                                  color: Colors.blueGrey,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.6,
-                                ),
-                              ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
-              );
-            }).toList(),
+          child: SingleChildScrollView(
+            child: _showTranslation
+                ? _buildTranslationMode(pageData, mushafFontSize, translationFontSize)
+                : _buildReadingMode(pageData, mushafFontSize),
           ),
+        );
+      },
+    );
+  }
+
+  // --- MODE 1: PURE MUSHAF READING MODE ---
+  Widget _buildReadingMode(List<dynamic> pageData, double fontSize) {
+    List<Widget> pageContent = [];
+
+    for (var surahInPage in pageData) {
+      final versesList = surahInPage!.verses!.values.toList();
+
+      if (versesList.isNotEmpty && versesList.first.verseNumber == 1) {
+        pageContent.add(_buildSurahHeader(surahInPage.surahNumber!));
+        
+        // Add Bismillah for all surahs EXCEPT Al-Fatihah (1) and At-Tawbah (9)
+        if (surahInPage.surahNumber != 1 && surahInPage.surahNumber != 9) {
+          pageContent.add(_buildBismillah());
+        }
+      }
+
+      List<InlineSpan> verseSpans = [];
+      for (var v in versesList) {
+        verseSpans.addAll([
+          TextSpan(
+            text: "${v.text} ",
+            style: TextStyle(
+              fontFamily: 'Uthmanic', // Ensure this font is in pubspec.yaml
+              fontSize: fontSize,
+              height: 1.8,
+              color: Colors.black87,
+            ),
+          ),
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: _buildAyahEnd(v.verseNumber),
+          ),
+          const TextSpan(text: " "),
+        ]);
+      }
+
+      // Wraps the surah text in a single justified block
+      pageContent.add(
+        RichText(
+          textAlign: TextAlign.justify,
+          textDirection: TextDirection.rtl,
+          text: TextSpan(children: verseSpans),
         ),
       );
-    },
-  );
-}
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: pageContent,
+    );
+  }
+
+  // --- MODE 2: TRANSLATION MODE ---
+  Widget _buildTranslationMode(List<dynamic> pageData, double arabicSize, double transSize) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: pageData.map<Widget>((surahInPage) {
+        final versesList = surahInPage!.verses!.values.toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (versesList.isNotEmpty && versesList.first.verseNumber == 1)
+              _buildSurahHeader(surahInPage.surahNumber!),
+            ...versesList.map((v) {
+              final translation = Quran.getVerse(
+                surahNumber: surahInPage.surahNumber!,
+                verseNumber: v.verseNumber,
+                language: QuranLanguage.english,
+              ).text;
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    RichText(
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "${v.text} ",
+                            style: TextStyle(
+                              fontFamily: 'Uthmanic',
+                              fontSize: arabicSize * 0.9,
+                              height: 1.8,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          WidgetSpan(
+                            alignment: PlaceholderAlignment.middle,
+                            child: _buildAyahEnd(v.verseNumber),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      translation,
+                      style: TextStyle(
+                        fontSize: transSize,
+                        color: Colors.blueGrey,
+                        fontStyle: FontStyle.italic,
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        );
+      }).toList(),
+    );
+  }
 
   Widget _buildAyahEnd(int num) {
     return Container(
@@ -373,6 +458,7 @@ class _QuranScreenState extends State<QuranScreen> {
     final dailyProgress = (_pagesReadToday / dailyTarget).clamp(0.0, 1.0);
     final monthlyTarget = _rounds * 604;
     final monthlyProgress = monthlyTarget <= 0 ? 0.0 : (_pagesReadMonth / monthlyTarget).clamp(0.0, 1.0);
+    
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
       decoration: const BoxDecoration(
