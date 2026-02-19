@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,11 +19,22 @@ class _PlannerScreenState extends State<PlannerScreen> {
   double _overallProgress = 0.0;
   int _pagesReadToday = 0;
   double _dailyTargetPages = 0.0;
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
     super.initState();
     _loadData();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      _refreshProgressIfNeeded();
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   // Load both the Goal and the Progress (based on checklist)
@@ -53,6 +66,45 @@ class _PlannerScreenState extends State<PlannerScreen> {
       _overallProgress = progress;
       _isLoading = false;
     });
+  }
+
+  Future<void> _refreshProgressIfNeeded() async {
+    if (_isLoading || _isRefreshing) {
+      return;
+    }
+
+    _isRefreshing = true;
+    final prefs = await SharedPreferences.getInstance();
+
+    final today = _formatDate(DateTime.now());
+    final storedDate = prefs.getString('quran_progress_date') ?? '';
+    int rounds = prefs.getInt('quran_rounds_goal') ?? _rounds;
+
+    if (storedDate != today) {
+      await prefs.setString('quran_progress_date', today);
+      await prefs.setStringList('quran_pages_read_today', <String>[]);
+      await _resetDailyChecklist(prefs, rounds);
+    }
+
+    final storedPages = prefs.getStringList('quran_pages_read_today') ?? <String>[];
+    final dailyTarget = (rounds * _totalQuranPages) / 30;
+    final progress = dailyTarget <= 0 ? 0.0 : (storedPages.length / dailyTarget).clamp(0.0, 1.0);
+
+    final bool needsUpdate = rounds != _rounds ||
+        storedPages.length != _pagesReadToday ||
+        dailyTarget != _dailyTargetPages ||
+        progress != _overallProgress;
+
+    if (needsUpdate && mounted) {
+      setState(() {
+        _rounds = rounds;
+        _pagesReadToday = storedPages.length;
+        _dailyTargetPages = dailyTarget;
+        _overallProgress = progress;
+      });
+    }
+
+    _isRefreshing = false;
   }
 
   Future<void> _resetDailyChecklist(SharedPreferences prefs, int rounds) async {
