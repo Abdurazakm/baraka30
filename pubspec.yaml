@@ -18,6 +18,7 @@ dependencies:
   timezone: ^0.9.4
   flutter_timezone: ^3.0.1
   quran_flutter: ^1.0.0 
+  hijri: ^3.0.0
 
 dev_dependencies:
   flutter_test:

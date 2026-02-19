@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adhan/adhan.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'dart:async';
 
 // Core Data Imports
@@ -23,6 +24,20 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  static const List<String> _hijriMonthNames = [
+    'Muharram',
+    'Safar',
+    'Rabi I',
+    'Rabi II',
+    'Jumada I',
+    'Jumada II',
+    'Rajab',
+    'Sha\'ban',
+    'Ramadan',
+    'Shawwal',
+    'Dhu al-Qi\'dah',
+    'Dhu al-Hijjah',
+  ];
   late SharedPreferences _prefs;
   bool _prefsReady = false;
   Timer? _timer;
@@ -282,8 +297,14 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dayIndex = DateTime.now().day; 
-    final isLastTen = dayIndex >= 20;
+    final hijri = HijriCalendar.fromDate(DateTime.now());
+    final hijriDay = hijri.hDay;
+    final hijriMonth = hijri.hMonth;
+    final hijriYear = hijri.hYear;
+    final isRamadan = hijriMonth == 9;
+    final isLastTen = isRamadan && hijriDay >= 21;
+    final monthName = _hijriMonthNames[(hijriMonth - 1).clamp(0, 11)];
+    final inspirationIndex = hijriDay;
 
     _scheduleRoundsSyncIfNeeded();
 
@@ -320,7 +341,12 @@ class HomeScreenState extends State<HomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text("Ramadan Day $dayIndex", style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                          Text(
+                            isRamadan
+                                ? "Ramadan Day $hijriDay"
+                                : "$monthName $hijriDay, $hijriYear AH",
+                            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          ),
                           if (isLastTen) 
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -336,11 +362,11 @@ class HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 24),
                       Text("Today's Inspiration", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      AyahCard(item: ayat[dayIndex % ayat.length]),
+                      AyahCard(item: ayat[inspirationIndex % ayat.length]),
                       const SizedBox(height: 12),
-                      AyahCard(item: duas[dayIndex % duas.length]),
+                      AyahCard(item: duas[inspirationIndex % duas.length]),
                       const SizedBox(height: 12),
-                      AyahCard(item: hadith[dayIndex % hadith.length]),
+                      AyahCard(item: hadith[inspirationIndex % hadith.length]),
                       const SizedBox(height: 24),
                       _buildWaterTracker(theme),
                       const SizedBox(height: 24),
