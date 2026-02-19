@@ -272,6 +272,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  quran_flutter:
+    dependency: "direct main"
+    description:
+      name: quran_flutter
+      sha256: da28d9cbcfe77e8d0d228cbc8b5898b267c68c599f4aae62f8eab1d977f5ae66
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
   shared_preferences:
     dependency: "direct main"
     description:

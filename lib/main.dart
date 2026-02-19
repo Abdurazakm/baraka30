@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quran_flutter/quran_flutter.dart';
 import 'screens/dhikr_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/planner_screen.dart';
@@ -6,18 +7,22 @@ import 'screens/quran_screen.dart';
 import 'services/notification_service.dart';
 
 Future<void> main() async {
-  // Ensure Flutter is initialized before calling native services
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Quran Database
+  await Quran.initialize();
   
   // Initialize Notification Service
   await NotificationService.instance.initialize();
   await NotificationService.instance.scheduleSuhoorIftarIfConfigured();
   
-  runApp(const BarakaApp());
+  runApp(BarakaApp());
 }
 
 class BarakaApp extends StatelessWidget {
-  const BarakaApp({super.key});
+  BarakaApp({super.key});
+
+  final ValueNotifier<int> _roundsGoalNotifier = ValueNotifier<int>(1);
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +30,11 @@ class BarakaApp extends StatelessWidget {
     final lightScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF2E7D32),
       brightness: Brightness.light,
-      primary: const Color(0xFF2E7D32), // Rich Green
-      secondary: const Color(0xFF66BB6A), // Light Green
-      surface: const Color(0xFFF3F1EA), // Warm Surface
-      background: const Color(0xFFF8F6EF), // Soft Background
-      tertiary: const Color(0xFF1B5E20), // Dark Accent
+      primary: const Color(0xFF2E7D32),
+      secondary: const Color(0xFF66BB6A),
+      surface: const Color(0xFFF3F1EA),
+      // Fix: 'background' replaced with 'surface' based on Flutter 3.18+ standards
+      tertiary: const Color(0xFF1B5E20),
     );
 
     final darkScheme = ColorScheme.fromSeed(
@@ -38,81 +43,84 @@ class BarakaApp extends StatelessWidget {
       primary: const Color(0xFF66BB6A),
       secondary: const Color(0xFF81C784),
       surface: const Color(0xFF1A1A1A),
-      background: const Color(0xFF121212),
       tertiary: const Color(0xFF4CAF50),
     );
 
     return MaterialApp(
       title: 'Baraka30',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system, // Switches based on device settings
+      themeMode: ThemeMode.system,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: lightScheme,
-        scaffoldBackgroundColor: lightScheme.background,
-        fontFamily: 'Serif', // Elegant spiritual typography
+        // Fix: Use surface for background color
+        scaffoldBackgroundColor: lightScheme.surface,
+        fontFamily: 'Serif', 
         
-        // Transparent AppBar allows Home Screen gradients to show through
         appBarTheme: AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
           foregroundColor: lightScheme.primary,
           centerTitle: false,
-          titleTextStyle: const TextStyle(
+          titleTextStyle: TextStyle(
             fontFamily: 'Serif',
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1B5E20),
+            color: lightScheme.tertiary,
           ),
         ),
 
-        // Modern Rounded Cards
+        // Fix: Changed CardTheme to CardThemeData
         cardTheme: CardThemeData(
-          color: lightScheme.surface.withOpacity(0.9),
+          color: lightScheme.surface.withValues(alpha: 0.9), // Fix: used withValues
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: lightScheme.primary.withOpacity(0.1)),
+            side: BorderSide(color: lightScheme.primary.withValues(alpha: 0.1)),
           ),
         ),
 
-        // Bottom Navigation Styling
         navigationBarTheme: NavigationBarThemeData(
           backgroundColor: lightScheme.surface,
-          indicatorColor: lightScheme.primary.withOpacity(0.12),
-          labelTextStyle: MaterialStateProperty.all(
+          indicatorColor: lightScheme.primary.withValues(alpha: 0.12),
+          labelTextStyle: WidgetStateProperty.all(
             TextStyle(color: lightScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
           ),
-          iconTheme: MaterialStateProperty.all(
-            IconThemeData(color: lightScheme.primary),
-          ),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return IconThemeData(color: lightScheme.primary, size: 28);
+            }
+            return IconThemeData(color: lightScheme.primary.withValues(alpha: 0.6));
+          }),
         ),
       ),
       darkTheme: ThemeData(
         useMaterial3: true,
         colorScheme: darkScheme,
-        scaffoldBackgroundColor: darkScheme.background,
+        scaffoldBackgroundColor: darkScheme.surface,
         fontFamily: 'Serif',
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
       ),
-      home: const AppShell(),
+      home: AppShell(roundsGoalNotifier: _roundsGoalNotifier),
       routes: {
-        '/home': (_) => const HomeScreen(),
+        '/home': (_) => HomeScreen(roundsGoalListenable: _roundsGoalNotifier),
         '/dhikr': (_) => const DhikrScreen(),
         '/quran': (_) => const QuranScreen(),
-        '/planner': (_) => const PlannerScreen(),
+        '/planner': (_) => PlannerScreen(roundsGoalNotifier: _roundsGoalNotifier),
       },
     );
   }
 }
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, required this.roundsGoalNotifier});
+
+  final ValueNotifier<int> roundsGoalNotifier;
 
   @override
   State<AppShell> createState() => _AppShellState();
@@ -121,25 +129,23 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _index = 0;
 
-  // Ordered list of screens for the Navigation Bar
-  final _screens = const [
-    HomeScreen(),
-    DhikrScreen(),
-    QuranScreen(),
-    PlannerScreen(),
+  late final List<Widget> _screens = [
+    HomeScreen(roundsGoalListenable: widget.roundsGoalNotifier),
+    const DhikrScreen(),
+    const QuranScreen(),
+    PlannerScreen(roundsGoalNotifier: widget.roundsGoalNotifier),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // extendBody allows the Home Screen background to flow behind the Navigation Bar
       extendBody: true, 
       body: IndexedStack(
         index: _index,
         children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
-        elevation: 0,
+        elevation: 8,
         selectedIndex: _index,
         onDestinationSelected: (value) {
           setState(() {

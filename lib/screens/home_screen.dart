@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adhan/adhan.dart';
 import 'dart:async';
@@ -7,39 +8,33 @@ import 'dart:async';
 import '../data/ayat.dart';
 import '../data/duas.dart';
 import '../data/hadith.dart';
-import '../data/asma.dart'; // Ensure this exists for the Asma'ul Husna card
 
 // Widgets
 import '../widgets/ayah_card.dart';
 import '../widgets/checklist_item.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.roundsGoalListenable});
+
+  final ValueListenable<int>? roundsGoalListenable;
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   late SharedPreferences _prefs;
   bool _prefsReady = false;
   Timer? _timer;
   int _waterGlasses = 0;
+  int _quranPagesPerPrayer = 4; // Dynamic based on Planner Goal
+  int _lastRoundsGoal = 1;
 
-  // Placeholder coordinates (Addis Ababa). 
-  // In Phase 2, you can use geolocator to update these.
+  // Placeholder coordinates (Addis Ababa)
   final double lat = 9.03;
   final double lng = 38.74;
 
-  final List<_ChecklistEntry> _checklist = [
-    _ChecklistEntry('Fajr Prayer'),
-    _ChecklistEntry('Dhuhr'),
-    _ChecklistEntry('Asr'),
-    _ChecklistEntry('Maghrib'),
-    _ChecklistEntry('Isha'),
-    _ChecklistEntry('Quran Reading'),
-    _ChecklistEntry('Taraweeh/Tahajjud'),
-  ];
+  final List<_ChecklistEntry> _checklist = [];
 
   @override
   void initState() {
@@ -47,11 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadData();
     // Refresh every minute to keep countdown and background colors accurate
     _timer = Timer.periodic(const Duration(minutes: 1), (t) => setState(() {}));
+    widget.roundsGoalListenable?.addListener(_onRoundsGoalChanged);
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    widget.roundsGoalListenable?.removeListener(_onRoundsGoalChanged);
     super.dispose();
   }
 
@@ -59,7 +56,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _prefs = await SharedPreferences.getInstance();
     _waterGlasses = _prefs.getInt('water_count') ?? 0;
     
+    // 1. Calculate Dynamic Quran Goal
+    int rounds = _prefs.getInt('quran_rounds_goal') ?? 1;
+    _lastRoundsGoal = rounds;
+    // (604 pages * rounds) / 30 days / 5 prayers
+    _quranPagesPerPrayer = ((604 * rounds) / 30 / 5).ceil();
+
     final today = _formatDate(DateTime.now());
+    
+    // 2. Initialize the dynamic checklist
+    _updateChecklistItems();
+
     if (_prefs.getString('last_reset_date') != today) {
       await _prefs.setInt('water_count', 0);
       _waterGlasses = 0;
@@ -73,6 +80,61 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
     setState(() => _prefsReady = true);
+  }
+
+  void _onRoundsGoalChanged() {
+    if (!_prefsReady) {
+      _loadData();
+      return;
+    }
+
+    final rounds = widget.roundsGoalListenable?.value ?? _lastRoundsGoal;
+    if (rounds == _lastRoundsGoal) {
+      return;
+    }
+
+    _applyRoundsUpdate(rounds);
+  }
+
+  void _scheduleRoundsSyncIfNeeded() {
+    if (!_prefsReady) {
+      return;
+    }
+
+    final rounds = _prefs.getInt('quran_rounds_goal') ?? 1;
+    if (rounds == _lastRoundsGoal) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _applyRoundsUpdate(rounds);
+    });
+  }
+
+  void _applyRoundsUpdate(int rounds) {
+    _lastRoundsGoal = rounds;
+    _quranPagesPerPrayer = ((604 * rounds) / 30 / 5).ceil();
+    _updateChecklistItems();
+    for (var item in _checklist) {
+      item.checked = _prefs.getBool('task_${item.title}') ?? false;
+    }
+    setState(() {});
+  }
+
+  void _updateChecklistItems() {
+    _checklist.clear();
+    _checklist.addAll([
+      _ChecklistEntry('Fajr + Read $_quranPagesPerPrayer Pages'),
+      _ChecklistEntry('Dhuhr + Read $_quranPagesPerPrayer Pages'),
+      _ChecklistEntry('Asr + Read $_quranPagesPerPrayer Pages'),
+      _ChecklistEntry('Maghrib + Read $_quranPagesPerPrayer Pages'),
+      _ChecklistEntry('Isha + Read $_quranPagesPerPrayer Pages'),
+      _ChecklistEntry('Taraweeh/Tahajjud'),
+      _ChecklistEntry('Morning/Evening Dhikr'),
+    ]);
   }
 
   // --- 1. DYNAMIC BACKGROUND LOGIC ---
@@ -109,24 +171,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildTimingSection(ThemeData theme) {
     final times = _getPrayerTimes();
     final now = DateTime.now();
-    
-    // Check if we are currently fasting
     bool isFasting = now.isAfter(times.fajr) && now.isBefore(times.maghrib);
-    
-    // Find next prayer
     final nextPrayer = times.nextPrayer();
     final nextTime = times.timeForPrayer(nextPrayer);
     final String nextName = nextPrayer.name[0].toUpperCase() + nextPrayer.name.substring(1);
-
-    // Calculate countdown
     final diff = nextTime?.difference(now) ?? const Duration(hours: 0);
     
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface.withOpacity(0.9),
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
       ),
       child: Column(
         children: [
@@ -189,9 +245,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: Colors.blue.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withOpacity(0.2)),
+        border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -229,6 +285,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final dayIndex = DateTime.now().day; 
     final isLastTen = dayIndex >= 20;
 
+    _scheduleRoundsSyncIfNeeded();
+
+    if (_prefsReady) {
+      for (var item in _checklist) {
+        item.checked = _prefs.getBool('task_${item.title}') ?? false;
+      }
+    }
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -265,13 +329,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                         ],
                       ),
-                      
                       const SizedBox(height: 20),
                       _buildTimingSection(theme),
-                      
                       const SizedBox(height: 20),
                       _buildNiyyahCard(theme),
-
                       const SizedBox(height: 24),
                       Text("Today's Inspiration", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
@@ -280,50 +341,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       AyahCard(item: duas[dayIndex % duas.length]),
                       const SizedBox(height: 12),
                       AyahCard(item: hadith[dayIndex % hadith.length]),
-
                       const SizedBox(height: 24),
                       _buildWaterTracker(theme),
-
                       const SizedBox(height: 24),
                       Text("Daily Checklist", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 12),
-                      ..._checklist.map((item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: ChecklistItem(
-                          title: item.title,
-                          checked: item.checked,
-                          onChanged: (val) {
-                            setState(() => item.checked = val ?? false);
-                            _prefs.setBool('task_${item.title}', item.checked);
-                          },
-                        ),
-                      )),
-                      
-                      // SUNNA TIP REMINDER
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.symmetric(vertical: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.black12, 
-                          borderRadius: BorderRadius.circular(15),
-                          border: Border.all(color: Colors.white24)
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.tips_and_updates, color: Colors.amber),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                DateTime.now().hour > 16 
-                                  ? "Sunnah: Break your fast with dates and water." 
-                                  : "Sunnah: Use Miswak to keep your breath fresh while fasting.",
-                                style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      if (_prefsReady)
+                        ..._checklist.map((item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: ChecklistItem(
+                            title: item.title,
+                            checked: item.checked,
+                            onChanged: (val) {
+                              setState(() => item.checked = val ?? false);
+                              _prefs.setBool('task_${item.title}', item.checked);
+                            },
+                          ),
+                        )),
+                      _buildSunnahTip(),
                       const SizedBox(height: 40),
                     ],
                   ),
@@ -332,6 +367,33 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSunnahTip() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(vertical: 20),
+      decoration: BoxDecoration(
+        color: Colors.black12, 
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white24)
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.tips_and_updates, color: Colors.amber),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              DateTime.now().hour > 16 
+                ? "Sunnah: Break your fast with dates and water." 
+                : "Sunnah: Use Miswak to keep your breath fresh while fasting.",
+              style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -369,6 +431,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _ChecklistEntry {
   final String title;
-  bool checked;
-  _ChecklistEntry(this.title, {this.checked = false});
+  bool checked = false;
+  _ChecklistEntry(this.title);
 }
