@@ -16,6 +16,7 @@ class _QuranScreenState extends State<QuranScreen> {
   late SharedPreferences _prefs;
   bool _isLoading = true;
   bool _showTranslation = true;
+  QuranLanguage _selectedTranslationLanguage = QuranLanguage.english;
   List<Surah> _surahList = [];
   int _rounds = 1;
   double _dailyTargetPages = 0.0;
@@ -38,6 +39,7 @@ class _QuranScreenState extends State<QuranScreen> {
     _currentPage = _prefs.getInt('quran_current_page') ?? 1;
     _bookmarkedPage = _prefs.getInt('quran_bookmark') ?? -1;
     _showTranslation = _prefs.getBool('show_translation') ?? true;
+    _selectedTranslationLanguage = _getSavedTranslationLanguage();
 
     _loadReadingPlan();
     await _loadDailyProgress();
@@ -181,6 +183,80 @@ class _QuranScreenState extends State<QuranScreen> {
     _prefs.setBool('show_translation', _showTranslation);
   }
 
+  QuranLanguage _getSavedTranslationLanguage() {
+    final savedName = _prefs.getString('quran_translation_language');
+    if (savedName == null || savedName.isEmpty) {
+      return QuranLanguage.english;
+    }
+
+    for (final language in QuranLanguage.values) {
+      if (language.name == savedName) {
+        return language;
+      }
+    }
+
+    return QuranLanguage.english;
+  }
+
+  Future<void> _setTranslationLanguage(QuranLanguage language) async {
+    if (_selectedTranslationLanguage == language) {
+      return;
+    }
+
+    setState(() {
+      _selectedTranslationLanguage = language;
+    });
+    await _prefs.setString('quran_translation_language', language.name);
+  }
+
+  String _getTranslationText({
+    required int surahNumber,
+    required int verseNumber,
+  }) {
+    try {
+      return Quran.getVerse(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+        language: _selectedTranslationLanguage,
+      ).text;
+    } catch (_) {
+      return Quran.getVerse(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+        language: QuranLanguage.english,
+      ).text;
+    }
+  }
+
+  Future<void> _showTranslationLanguagePicker() async {
+    final selected = await showModalBottomSheet<QuranLanguage>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: ListView.builder(
+            itemCount: QuranLanguage.values.length,
+            itemBuilder: (context, index) {
+              final language = QuranLanguage.values[index];
+              final isSelected = language == _selectedTranslationLanguage;
+              return ListTile(
+                title: Text(language.value),
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.pop(context, language),
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await _setTranslationLanguage(selected);
+    }
+  }
+
   Future<void> _toggleBookmark() async {
     if (_bookmarkedPage == _currentPage) {
       await _prefs.remove('quran_bookmark');
@@ -233,6 +309,11 @@ class _QuranScreenState extends State<QuranScreen> {
             icon: Icon(_showTranslation ? Icons.g_translate : Icons.translate_outlined),
             onPressed: _toggleTranslation,
             tooltip: "Toggle Translation",
+          ),
+          IconButton(
+            icon: const Icon(Icons.language),
+            tooltip: 'Translation Language',
+            onPressed: _showTranslationLanguagePicker,
           ),
           IconButton(
             icon: Icon(
@@ -305,7 +386,7 @@ class _QuranScreenState extends State<QuranScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFFFBF9F1),
             border: Border.all(
-              color: Colors.brown.withOpacity(0.15),
+              color: Colors.brown.withValues(alpha: 0.15),
             ),
           ),
           child: SingleChildScrollView(
@@ -383,11 +464,10 @@ class _QuranScreenState extends State<QuranScreen> {
             if (versesList.isNotEmpty && versesList.first.verseNumber == 1)
               _buildSurahHeader(surahInPage.surahNumber!),
             ...versesList.map((v) {
-              final translation = Quran.getVerse(
+              final translation = _getTranslationText(
                 surahNumber: surahInPage.surahNumber!,
                 verseNumber: v.verseNumber,
-                language: QuranLanguage.english,
-              ).text;
+              );
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 24.0),
@@ -456,9 +536,9 @@ class _QuranScreenState extends State<QuranScreen> {
       margin: const EdgeInsets.symmetric(vertical: 20),
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.brown.withOpacity(0.05),
+        color: Colors.brown.withValues(alpha: 0.05),
         border: Border.symmetric(
-          horizontal: BorderSide(color: Colors.brown.withOpacity(0.2)),
+          horizontal: BorderSide(color: Colors.brown.withValues(alpha: 0.2)),
         ),
       ),
       child: Text(
