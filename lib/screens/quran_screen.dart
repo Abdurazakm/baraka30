@@ -15,8 +15,7 @@ class QuranScreen extends StatefulWidget {
 
 class _QuranScreenState extends State<QuranScreen> {
   static const String _highlightedVersesKey = 'quran_highlighted_verses';
-  static const String _bismillahText =
-      'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
+  static const String _bismillahText = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
   late PageController _pageController;
   int _currentPage = 1;
@@ -867,8 +866,8 @@ class _QuranScreenState extends State<QuranScreen> {
 
         final displayText =
             (v.verseNumber == 1 && surahNumber != 1 && surahNumber != 9)
-                ? _stripBismillahPrefix(v.text)
-                : v.text;
+            ? _stripBismillahPrefix(v.text)
+            : v.text;
 
         if (displayText.trim().isNotEmpty) {
           // Add the actual Arabic verse text
@@ -959,7 +958,8 @@ class _QuranScreenState extends State<QuranScreen> {
                 surahNumber: surahInPage.surahNumber!,
                 verseNumber: v.verseNumber,
               );
-              final displayText = (v.verseNumber == 1 &&
+              final displayText =
+                  (v.verseNumber == 1 &&
                       surahInPage.surahNumber! != 1 &&
                       surahInPage.surahNumber! != 9)
                   ? _stripBismillahPrefix(v.text)
