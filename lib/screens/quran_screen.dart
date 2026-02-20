@@ -3,6 +3,8 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quran_flutter/quran_flutter.dart';
 import 'package:flutter/gestures.dart';
+import '../services/offline_quran_service.dart';
+import 'downloads_screen.dart';
 
 class QuranScreen extends StatefulWidget {
   const QuranScreen({super.key});
@@ -33,6 +35,12 @@ class _QuranScreenState extends State<QuranScreen> {
   String? _playingVerseKey;
   bool _isAudioBusy = false;
   final Set<String> _highlightedVerses = <String>{};
+  final OfflineQuranService _offlineService = OfflineQuranService();
+  final Map<int, Map<int, String>> _offlineTranslationCache = {};
+  String _offlineTranslationKey = OfflineQuranService.defaultTranslationKey;
+  String _offlineReciterKey = OfflineQuranService.defaultReciterKey;
+  bool _useDownloadedTranslations = false;
+  bool _useDownloadedAudio = false;
 
   @override
   void initState() {
@@ -62,13 +70,69 @@ class _QuranScreenState extends State<QuranScreen> {
     _showTranslation = _prefs.getBool('show_translation') ?? true;
     _selectedTranslationLanguage = _getSavedTranslationLanguage();
     _loadHighlightedVerses();
+    await _loadDownloadPrefs();
 
     _loadReadingPlan();
     await _loadDailyProgress();
     await _loadMonthlyProgress();
 
     _pageController = PageController(initialPage: _currentPage - 1);
+    _prefetchOfflineTranslationsForPage(_currentPage);
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _loadDownloadPrefs() async {
+    _offlineTranslationKey =
+        _prefs.getString(DownloadsScreen.translationKeyPref) ??
+            OfflineQuranService.defaultTranslationKey;
+    _offlineReciterKey = _prefs.getString(DownloadsScreen.reciterKeyPref) ??
+        OfflineQuranService.defaultReciterKey;
+    _useDownloadedTranslations =
+        _prefs.getBool(DownloadsScreen.useDownloadedTranslationPref) ?? false;
+    _useDownloadedAudio =
+        _prefs.getBool(DownloadsScreen.useDownloadedAudioPref) ?? false;
+  }
+
+  Future<void> _reloadDownloadPrefs() async {
+    await _loadDownloadPrefs();
+    _offlineTranslationCache.clear();
+    _prefetchOfflineTranslationsForPage(_currentPage);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _prefetchOfflineTranslationsForPage(int pageNum) async {
+    if (!_useDownloadedTranslations) {
+      return;
+    }
+    final dynamic pageData = Quran.getSurahVersesInPageAsList(pageNum);
+    if (pageData == null) {
+      return;
+    }
+
+    final Set<int> surahNumbers = {};
+    for (final surahInPage in pageData) {
+      final surahNumber = surahInPage!.surahNumber! as int;
+      surahNumbers.add(surahNumber);
+    }
+
+    for (final surahNumber in surahNumbers) {
+      if (_offlineTranslationCache.containsKey(surahNumber)) {
+        continue;
+      }
+      final map = await _offlineService.loadTranslationMap(
+        key: _offlineTranslationKey,
+        surah: surahNumber,
+      );
+      if (map.isNotEmpty) {
+        _offlineTranslationCache[surahNumber] = map;
+      }
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _loadReadingPlan() {
@@ -126,6 +190,7 @@ class _QuranScreenState extends State<QuranScreen> {
     setState(() => _currentPage = pageNum);
     _prefs.setInt('quran_current_page', pageNum);
     _trackPageRead(pageNum);
+    _prefetchOfflineTranslationsForPage(pageNum);
   }
 
   Future<void> _trackPageRead(int pageNum) async {
@@ -238,6 +303,13 @@ class _QuranScreenState extends State<QuranScreen> {
     required int surahNumber,
     required int verseNumber,
   }) {
+    if (_useDownloadedTranslations) {
+      final surahMap = _offlineTranslationCache[surahNumber];
+      final offline = surahMap?[verseNumber];
+      if (offline != null && offline.isNotEmpty) {
+        return offline;
+      }
+    }
     try {
       return Quran.getVerse(
         surahNumber: surahNumber,
@@ -306,7 +378,11 @@ class _QuranScreenState extends State<QuranScreen> {
   }) {
     final surah = surahNumber.toString().padLeft(3, '0');
     final verse = verseNumber.toString().padLeft(3, '0');
-    return 'https://everyayah.com/data/Alafasy_128kbps/$surah$verse.mp3';
+    final reciter = OfflineQuranService.reciterOptions.firstWhere(
+      (r) => r.key == _offlineReciterKey,
+      orElse: () => OfflineQuranService.reciterOptions.first,
+    );
+    return '${reciter.baseUrl}/$surah$verse.mp3';
   }
 
   Future<void> _handleVerseLongPress({
@@ -336,6 +412,23 @@ class _QuranScreenState extends State<QuranScreen> {
           });
         }
         return;
+      }
+
+      if (_useDownloadedAudio) {
+        final file = await _offlineService.getOfflineAudioFile(
+          reciterKey: _offlineReciterKey,
+          surah: surahNumber,
+          ayah: verseNumber,
+        );
+        if (file != null) {
+          await _audioPlayer.stop();
+          if (!mounted) {
+            return;
+          }
+          setState(() => _playingVerseKey = selectedKey);
+          await _audioPlayer.play(DeviceFileSource(file.path));
+          return;
+        }
       }
 
       final url = _buildVerseAudioUrl(
@@ -572,6 +665,19 @@ class _QuranScreenState extends State<QuranScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.download_for_offline),
+            tooltip: 'Offline Downloads',
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const DownloadsScreen()),
+              );
+              if (result == true) {
+                await _reloadDownloadPrefs();
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bookmark_added_outlined),
             tooltip: 'Go to Bookmark',

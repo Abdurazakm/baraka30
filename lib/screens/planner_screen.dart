@@ -18,7 +18,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
   bool _isLoading = true;
   double _overallProgress = 0.0;
   int _pagesReadToday = 0;
+  int _pagesReadMonth = 0;
   double _dailyTargetPages = 0.0;
+  double _monthlyTargetPages = 0.0;
   Timer? _refreshTimer;
   bool _isRefreshing = false;
 
@@ -49,20 +51,31 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
     final today = _formatDate(DateTime.now());
     final storedDate = prefs.getString('quran_progress_date') ?? '';
+    final monthKey = _formatMonth(DateTime.now());
+    final storedMonth = prefs.getString('quran_progress_month') ?? '';
     if (storedDate != today) {
       await prefs.setString('quran_progress_date', today);
       await prefs.setStringList('quran_pages_read_today', <String>[]);
       await _resetDailyChecklist(prefs, rounds);
     }
+    if (storedMonth != monthKey) {
+      await prefs.setString('quran_progress_month', monthKey);
+      await prefs.setStringList('quran_pages_read_month', <String>[]);
+    }
 
     final storedPages = prefs.getStringList('quran_pages_read_today') ?? <String>[];
+    final storedMonthPages =
+        prefs.getStringList('quran_pages_read_month') ?? <String>[];
     final dailyTarget = (rounds * _totalQuranPages) / 30;
+    final monthlyTarget = rounds * _totalQuranPages.toDouble();
     final progress = dailyTarget <= 0 ? 0.0 : (storedPages.length / dailyTarget).clamp(0.0, 1.0);
 
     setState(() {
       _rounds = rounds;
       _pagesReadToday = storedPages.length;
+      _pagesReadMonth = storedMonthPages.length;
       _dailyTargetPages = dailyTarget;
+      _monthlyTargetPages = monthlyTarget;
       _overallProgress = progress;
       _isLoading = false;
     });
@@ -78,6 +91,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
     final today = _formatDate(DateTime.now());
     final storedDate = prefs.getString('quran_progress_date') ?? '';
+    final monthKey = _formatMonth(DateTime.now());
+    final storedMonth = prefs.getString('quran_progress_month') ?? '';
     int rounds = prefs.getInt('quran_rounds_goal') ?? _rounds;
 
     if (storedDate != today) {
@@ -85,21 +100,32 @@ class _PlannerScreenState extends State<PlannerScreen> {
       await prefs.setStringList('quran_pages_read_today', <String>[]);
       await _resetDailyChecklist(prefs, rounds);
     }
+    if (storedMonth != monthKey) {
+      await prefs.setString('quran_progress_month', monthKey);
+      await prefs.setStringList('quran_pages_read_month', <String>[]);
+    }
 
     final storedPages = prefs.getStringList('quran_pages_read_today') ?? <String>[];
+    final storedMonthPages =
+        prefs.getStringList('quran_pages_read_month') ?? <String>[];
     final dailyTarget = (rounds * _totalQuranPages) / 30;
+    final monthlyTarget = rounds * _totalQuranPages.toDouble();
     final progress = dailyTarget <= 0 ? 0.0 : (storedPages.length / dailyTarget).clamp(0.0, 1.0);
 
     final bool needsUpdate = rounds != _rounds ||
         storedPages.length != _pagesReadToday ||
+        storedMonthPages.length != _pagesReadMonth ||
         dailyTarget != _dailyTargetPages ||
+        monthlyTarget != _monthlyTargetPages ||
         progress != _overallProgress;
 
     if (needsUpdate && mounted) {
       setState(() {
         _rounds = rounds;
         _pagesReadToday = storedPages.length;
+        _pagesReadMonth = storedMonthPages.length;
         _dailyTargetPages = dailyTarget;
+        _monthlyTargetPages = monthlyTarget;
         _overallProgress = progress;
       });
     }
@@ -129,6 +155,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  String _formatMonth(DateTime date) {
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return '$year-$month';
   }
 
   Future<void> _saveGoal(int value) async {
@@ -170,6 +202,11 @@ class _PlannerScreenState extends State<PlannerScreen> {
             Text("Today's Progress", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             _buildProgressBar(theme),
+
+            const SizedBox(height: 20),
+            Text("Monthly Progress", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            _buildMonthlyProgressBar(theme),
             
             const SizedBox(height: 32),
             
@@ -233,6 +270,47 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
+  Widget _buildMonthlyProgressBar(ThemeData theme) {
+    final progress = _monthlyTargetPages <= 0
+        ? 0.0
+        : (_pagesReadMonth / _monthlyTargetPages).clamp(0.0, 1.0);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text("Monthly Quran Target", style: TextStyle(fontWeight: FontWeight.w600)),
+              Text("${(progress * 100).toInt()}%",
+                  style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 12,
+              backgroundColor: Colors.grey.shade100,
+              valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Read $_pagesReadMonth / ${_monthlyTargetPages.toStringAsFixed(0)} pages this month.",
+            style: const TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGoalSelector(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -245,7 +323,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
         child: DropdownButton<int>(
           value: _rounds,
           isExpanded: true,
-          items: List.generate(6, (i) => i + 1).map((val) => DropdownMenuItem(
+          items: List.generate(30, (i) => i + 1).map((val) => DropdownMenuItem(
             value: val, child: Text("$val Round${val > 1 ? 's' : ''} (Khatam)"),
           )).toList(),
           onChanged: (v) {

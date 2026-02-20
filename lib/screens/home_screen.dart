@@ -3,12 +3,15 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adhan/adhan.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:quran_flutter/quran_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import 'dart:math';
 
 // Core Data Imports
-import '../data/ayat.dart';
 import '../data/duas.dart';
 import '../data/hadith.dart';
+import '../data/daily_text.dart';
 
 // Widgets
 import '../widgets/ayah_card.dart';
@@ -41,13 +44,17 @@ class HomeScreenState extends State<HomeScreen> {
   late SharedPreferences _prefs;
   bool _prefsReady = false;
   Timer? _timer;
-  int _waterGlasses = 0;
+  Timer? _inspirationTimer;
   int _quranPagesPerPrayer = 4; // Dynamic based on Planner Goal
   int _lastRoundsGoal = 1;
+  DailyText? _dailyAyah;
+  late final PageController _inspirationController;
+  int _inspirationPage = 0;
 
-  // Placeholder coordinates (Addis Ababa)
-  final double lat = 9.03;
-  final double lng = 38.74;
+  static const double _defaultLat = 9.03;
+  static const double _defaultLng = 38.74;
+  double _lat = _defaultLat;
+  double _lng = _defaultLng;
 
   final List<_ChecklistEntry> _checklist = [];
 
@@ -58,19 +65,42 @@ class HomeScreenState extends State<HomeScreen> {
     // Refresh every minute to keep countdown and background colors accurate
     _timer = Timer.periodic(const Duration(minutes: 1), (t) => setState(() {}));
     widget.roundsGoalListenable?.addListener(_onRoundsGoalChanged);
+    _inspirationController = PageController();
+    _startInspirationTimer();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _inspirationTimer?.cancel();
     widget.roundsGoalListenable?.removeListener(_onRoundsGoalChanged);
+    _inspirationController.dispose();
     super.dispose();
+  }
+
+  void _startInspirationTimer() {
+    _inspirationTimer?.cancel();
+    _inspirationTimer = Timer.periodic(const Duration(seconds: 7), (_) {
+      if (!mounted) {
+        return;
+      }
+      final itemCount = 3;
+      if (itemCount <= 1 || !_inspirationController.hasClients) {
+        return;
+      }
+      _inspirationPage = (_inspirationPage + 1) % itemCount;
+      _inspirationController.animateToPage(
+        _inspirationPage,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+    });
   }
 
   Future<void> _loadData() async {
     _prefs = await SharedPreferences.getInstance();
-    _waterGlasses = _prefs.getInt('water_count') ?? 0;
-
+    _lat = _prefs.getDouble('user_lat') ?? _defaultLat;
+    _lng = _prefs.getDouble('user_lng') ?? _defaultLng;
     // 1. Calculate Dynamic Quran Goal
     int rounds = _prefs.getInt('quran_rounds_goal') ?? 1;
     _lastRoundsGoal = rounds;
@@ -83,8 +113,6 @@ class HomeScreenState extends State<HomeScreen> {
     _updateChecklistItems();
 
     if (_prefs.getString('last_reset_date') != today) {
-      await _prefs.setInt('water_count', 0);
-      _waterGlasses = 0;
       for (var item in _checklist) {
         await _prefs.setBool('task_${item.title}', false);
       }
@@ -94,7 +122,80 @@ class HomeScreenState extends State<HomeScreen> {
         item.checked = _prefs.getBool('task_${item.title}') ?? false;
       }
     }
+    await _loadDailyAyah();
+    await _loadLocation();
     setState(() => _prefsReady = true);
+  }
+
+  Future<void> _loadLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        return;
+      }
+
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null) {
+        await _updateLocation(lastKnown);
+      }
+
+      final current = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.low,
+      );
+      await _updateLocation(current);
+    } catch (_) {
+      // Keep fallback coordinates when location is unavailable.
+    }
+  }
+
+  Future<void> _updateLocation(Position position) async {
+    _lat = position.latitude;
+    _lng = position.longitude;
+    await _prefs.setDouble('user_lat', _lat);
+    await _prefs.setDouble('user_lng', _lng);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadDailyAyah() async {
+    final today = _formatDate(DateTime.now());
+    final savedDate = _prefs.getString('daily_ayah_date');
+    int surah = _prefs.getInt('daily_ayah_surah') ?? 1;
+    int ayah = _prefs.getInt('daily_ayah_ayah') ?? 1;
+
+    if (savedDate != today) {
+      final seed = int.tryParse(today.replaceAll('-', '')) ?? DateTime.now().day;
+      final random = Random(seed);
+      final surahs = Quran.getSurahAsList();
+      final selectedSurah = surahs[random.nextInt(surahs.length)];
+      surah = selectedSurah.number;
+      ayah = random.nextInt(selectedSurah.verseCount) + 1;
+      await _prefs.setString('daily_ayah_date', today);
+      await _prefs.setInt('daily_ayah_surah', surah);
+      await _prefs.setInt('daily_ayah_ayah', ayah);
+    }
+
+    final verse = Quran.getVerse(
+      surahNumber: surah,
+      verseNumber: ayah,
+      language: QuranLanguage.english,
+    ).text;
+
+    _dailyAyah = DailyText(
+      title: 'Ayah of the Day',
+      text: verse,
+      source: 'Quran $surah:$ayah',
+    );
   }
 
   void _onRoundsGoalChanged() {
@@ -179,7 +280,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   // --- 2. ADHAN OFFLINE CALCULATION ---
   PrayerTimes _getPrayerTimes() {
-    final myCoordinates = Coordinates(lat, lng);
+    final myCoordinates = Coordinates(_lat, _lng);
     final params = CalculationMethod.muslim_world_league.getParameters();
     params.madhab = Madhab.shafi;
     return PrayerTimes.today(myCoordinates, params);
@@ -286,67 +387,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 4. WATER TRACKER ---
-  Widget _buildWaterTracker(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Hydration Goal",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text("Track water post-Iftar", style: TextStyle(fontSize: 11)),
-            ],
-          ),
-          Row(
-            children: [
-              IconButton(
-                onPressed: () {
-                  if (_waterGlasses > 0) {
-                    setState(() => _waterGlasses--);
-                    _prefs.setInt('water_count', _waterGlasses);
-                  }
-                },
-                icon: const Icon(
-                  Icons.remove_circle_outline,
-                  color: Colors.blue,
-                  size: 20,
-                ),
-              ),
-              Text(
-                "$_waterGlasses",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  setState(() => _waterGlasses++);
-                  _prefs.setInt('water_count', _waterGlasses);
-                },
-                icon: const Icon(
-                  Icons.add_circle,
-                  color: Colors.blue,
-                  size: 20,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +399,17 @@ class HomeScreenState extends State<HomeScreen> {
     final isLastTen = isRamadan && hijriDay >= 21;
     final monthName = _hijriMonthNames[(hijriMonth - 1).clamp(0, 11)];
     final inspirationIndex = hijriDay;
+    final dailyAyah = _dailyAyah;
+    final inspirationItems = <DailyText>[
+      dailyAyah ??
+          const DailyText(
+            title: 'Ayah of the Day',
+            text: 'Loading today\'s ayah...',
+            source: '',
+          ),
+      duas[inspirationIndex % duas.length],
+      hadith[inspirationIndex % hadith.length],
+    ];
 
     _scheduleRoundsSyncIfNeeded();
 
@@ -369,32 +420,27 @@ class HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: _getAdaptiveColors(),
-          ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              const SliverAppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                title: Text(
-                  "Baraka30",
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22),
+      body: Stack(
+        children: [
+          _buildHomeBackground(theme),
+          SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                const SliverAppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: Text(
+                    "Baraka30",
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22),
+                  ),
+                  centerTitle: false,
                 ),
-                centerTitle: false,
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -426,6 +472,8 @@ class HomeScreenState extends State<HomeScreen> {
                             ),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      _buildHeroBanner(theme, isRamadan, monthName, hijriDay),
                       const SizedBox(height: 20),
                       _buildTimingSection(theme),
                       const SizedBox(height: 20),
@@ -438,13 +486,36 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      AyahCard(item: ayat[inspirationIndex % ayat.length]),
-                      const SizedBox(height: 12),
-                      AyahCard(item: duas[inspirationIndex % duas.length]),
-                      const SizedBox(height: 12),
-                      AyahCard(item: hadith[inspirationIndex % hadith.length]),
-                      const SizedBox(height: 24),
-                      _buildWaterTracker(theme),
+                      SizedBox(
+                        height: 220,
+                        child: PageView.builder(
+                          controller: _inspirationController,
+                          itemCount: inspirationItems.length,
+                          onPageChanged: (index) {
+                            setState(() => _inspirationPage = index);
+                          },
+                          itemBuilder: (context, index) {
+                            return AnimatedBuilder(
+                              animation: _inspirationController,
+                              child: SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                child: AyahCard(item: inspirationItems[index]),
+                              ),
+                              builder: (context, child) {
+                                double opacity = 1.0;
+                                if (_inspirationController.position.hasContentDimensions) {
+                                  final page = _inspirationController.page ?? _inspirationPage.toDouble();
+                                  final delta = (page - index).abs().clamp(0.0, 1.0);
+                                  opacity = 1 - delta;
+                                }
+                                return Opacity(opacity: opacity, child: child);
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildInspirationDots(theme, inspirationItems.length),
                       const SizedBox(height: 24),
                       Text(
                         "Daily Checklist",
@@ -472,13 +543,14 @@ class HomeScreenState extends State<HomeScreen> {
                         ),
                       _buildSunnahTip(),
                       const SizedBox(height: 40),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -552,6 +624,210 @@ class HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildHeroBanner(
+    ThemeData theme,
+    bool isRamadan,
+    String monthName,
+    int hijriDay,
+  ) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.tertiary.withValues(alpha: 0.85),
+            theme.colorScheme.primary.withValues(alpha: 0.85),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Assalamu Alaikum',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isRamadan
+                ? 'Stay steady on Day $hijriDay of Ramadan'
+                : 'Keep your Quran rhythm in $monthName',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: Colors.white70,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildHeroChip('Read', Icons.menu_book),
+              const SizedBox(width: 8),
+              _buildHeroChip('Dhikr', Icons.fingerprint),
+              const SizedBox(width: 8),
+              _buildHeroChip('Dua', Icons.auto_awesome),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white70),
+          const SizedBox(width: 6),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHomeBackground(ThemeData theme) {
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFFFFF3C2),
+                theme.colorScheme.surface,
+                const Color(0xFFFAD6C4),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          top: -60,
+          left: -40,
+          child: _buildGlowBlob(
+            size: 220,
+            color: theme.colorScheme.primary.withValues(alpha: 0.18),
+          ),
+        ),
+        Positioned(
+          top: 140,
+          right: -60,
+          child: _buildGlowBlob(
+            size: 200,
+            color: theme.colorScheme.tertiary.withValues(alpha: 0.16),
+          ),
+        ),
+        Positioned(
+          bottom: -80,
+          left: 40,
+          child: _buildGlowBlob(
+            size: 240,
+            color: Colors.orange.withValues(alpha: 0.12),
+          ),
+        ),
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _DotPatternPainter(
+              color: Colors.white.withValues(alpha: 0.35),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGlowBlob({required double size, required Color color}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [color, color.withValues(alpha: 0.0)],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInspirationDots(ThemeData theme, int count) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(count, (index) {
+        final isActive = index == _inspirationPage;
+        return GestureDetector(
+          onTap: () {
+            _inspirationController.animateToPage(
+              index,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: isActive ? 18 : 8,
+            height: 8,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.primary.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _DotPatternPainter extends CustomPainter {
+  _DotPatternPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    const double gap = 28;
+    const double radius = 1.2;
+    for (double y = 0; y <= size.height; y += gap) {
+      for (double x = 0; x <= size.width; x += gap) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DotPatternPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
 
