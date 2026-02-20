@@ -396,46 +396,49 @@ class _QuranScreenState extends State<QuranScreen> {
       builder: (context) {
         final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
         return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxHeight: maxHeight),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Surah $surahNumber • Ayah $verseNumber',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey,
+          child: Container(
+            color: Colors.black87,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Surah $surahNumber • Ayah $verseNumber',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    arabicText,
-                    textAlign: TextAlign.right,
-                    textDirection: TextDirection.rtl,
-                    softWrap: true,
-                    style: const TextStyle(
-                      fontFamily: 'Uthmanic',
-                      fontSize: 26,
-                      height: 1.8,
-                      color: Colors.black87,
+                    const SizedBox(height: 10),
+                    Text(
+                      arabicText,
+                      textAlign: TextAlign.right,
+                      textDirection: TextDirection.rtl,
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontFamily: 'Uthmanic',
+                        fontSize: 26,
+                        height: 1.8,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    translation,
-                    softWrap: true,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      height: 1.5,
-                      color: Colors.blueGrey,
-                      fontStyle: FontStyle.italic,
+                    const SizedBox(height: 12),
+                    Text(
+                      translation,
+                      softWrap: true,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Colors.white,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
