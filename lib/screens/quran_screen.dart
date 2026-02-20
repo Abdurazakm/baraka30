@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quran_flutter/quran_flutter.dart';
+import 'package:flutter/gestures.dart';
 
 class QuranScreen extends StatefulWidget {
   const QuranScreen({super.key});
@@ -671,6 +672,7 @@ class _QuranScreenState extends State<QuranScreen> {
       final surahNumber = surahInPage!.surahNumber!;
       final versesList = surahInPage.verses!.values.toList();
 
+      // Add headers if it's the start of a Surah
       if (versesList.isNotEmpty && versesList.first.verseNumber == 1) {
         pageContent.add(_buildSurahHeader(surahNumber));
         if (surahNumber != 1 && surahNumber != 9) {
@@ -678,58 +680,71 @@ class _QuranScreenState extends State<QuranScreen> {
         }
       }
 
+      // Collect all verses into a single list of text spans
+      List<InlineSpan> textSpans = [];
+
+      for (var v in versesList) {
+        final verseKey = _verseKey(surahNumber, v.verseNumber);
+        final isPlayingVerse = _playingVerseKey == verseKey;
+        final isHighlightedVerse = _highlightedVerses.contains(verseKey);
+
+        // Determine background color for highlights/audio
+        Color bgColor = Colors.transparent;
+        if (isPlayingVerse) {
+          bgColor = Colors.green.withValues(alpha: 0.14);
+        } else if (isHighlightedVerse) {
+          bgColor = Colors.amber.withValues(alpha: 0.18);
+        }
+
+        // Add the actual Arabic verse text
+        textSpans.add(
+          TextSpan(
+            text: '${v.text} ',
+            style: TextStyle(
+              fontFamily: 'Uthmanic',
+              fontSize: fontSize,
+              height: 1.8,
+              color: Colors.black87,
+              backgroundColor: bgColor, // Highlight spans across line breaks
+            ),
+            recognizer: LongPressGestureRecognizer()
+              ..onLongPress = () {
+                _handleVerseLongPress(
+                  surahNumber: surahNumber,
+                  verseNumber: v.verseNumber,
+                );
+              },
+          ),
+        );
+
+        // Add the Ayah end marker (the circle with the number)
+        textSpans.add(
+          WidgetSpan(
+            alignment: PlaceholderAlignment.middle,
+            child: GestureDetector(
+              onLongPress: () => _handleVerseLongPress(
+                surahNumber: surahNumber,
+                verseNumber: v.verseNumber,
+              ),
+              child: Container(
+                color: bgColor,
+                child: _buildAyahEnd(v.verseNumber),
+              ),
+            ),
+          ),
+        );
+        
+        // Small space between verses
+        textSpans.add(const TextSpan(text: ' ')); 
+      }
+
+      // Wrap the entire Surah section in a single, justified text block
       pageContent.add(
         Directionality(
           textDirection: TextDirection.rtl,
-          child: Wrap(
-            alignment: WrapAlignment.start,
-            runSpacing: 2,
-            spacing: 6,
-            children: versesList.map<Widget>((v) {
-              final verseKey = _verseKey(surahNumber, v.verseNumber);
-              final isPlayingVerse = _playingVerseKey == verseKey;
-              final isHighlightedVerse = _highlightedVerses.contains(verseKey);
-
-              return GestureDetector(
-                onLongPress: () => _handleVerseLongPress(
-                  surahNumber: surahNumber,
-                  verseNumber: v.verseNumber,
-                ),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 2,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isPlayingVerse
-                        ? Colors.green.withValues(alpha: 0.14)
-                        : isHighlightedVerse
-                        ? Colors.amber.withValues(alpha: 0.18)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${v.text} ',
-                          style: TextStyle(
-                            fontFamily: 'Uthmanic',
-                            fontSize: fontSize,
-                            height: 1.8,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        WidgetSpan(
-                          alignment: PlaceholderAlignment.middle,
-                          child: _buildAyahEnd(v.verseNumber),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          child: RichText(
+            textAlign: TextAlign.justify, // <-- This creates the physical Mushaf block look
+            text: TextSpan(children: textSpans),
           ),
         ),
       );
