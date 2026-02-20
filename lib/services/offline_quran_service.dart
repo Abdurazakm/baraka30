@@ -13,7 +13,11 @@ class TranslationOption {
 }
 
 class ReciterOption {
-  const ReciterOption({required this.key, required this.label, required this.baseUrl});
+  const ReciterOption({
+    required this.key,
+    required this.label,
+    required this.baseUrl,
+  });
 
   final String key;
   final String label;
@@ -25,7 +29,10 @@ class OfflineQuranService {
   static const String defaultReciterKey = 'alafasy_128kbps';
 
   static const List<TranslationOption> translationOptions = [
-    TranslationOption(key: 'english_saheeh', label: 'English - Saheeh International'),
+    TranslationOption(
+      key: 'english_saheeh',
+      label: 'English - Saheeh International',
+    ),
     TranslationOption(key: 'english_qaribullah', label: 'English - Qaribullah'),
     TranslationOption(key: 'urdu_junagarhi', label: 'Urdu - Junagarhi'),
     TranslationOption(key: 'french_hamidullah', label: 'French - Hamidullah'),
@@ -40,12 +47,14 @@ class OfflineQuranService {
     ),
   ];
 
-  static const String _quranEncBaseUrl = 'https://quranenc.com/api/v1/translation/sura';
+  static const String _quranEncBaseUrl =
+      'https://quranenc.com/api/v1/translation/sura';
   static const String _rootFolder = 'offline_quran';
 
   final http.Client _client;
 
-  OfflineQuranService({http.Client? client}) : _client = client ?? http.Client();
+  OfflineQuranService({http.Client? client})
+    : _client = client ?? http.Client();
 
   Future<Directory> _baseDir() async {
     if (kIsWeb) {
@@ -68,7 +77,9 @@ class OfflineQuranService {
   }
 
   Future<File> _audioFile(String reciterKey, int surah, int ayah) async {
-    final dir = Directory('${(await _baseDir()).path}/audio/$reciterKey/surah_$surah');
+    final dir = Directory(
+      '${(await _baseDir()).path}/audio/$reciterKey/surah_$surah',
+    );
     if (!await dir.exists()) {
       await dir.create(recursive: true);
     }
@@ -101,7 +112,9 @@ class OfflineQuranService {
     final url = Uri.parse('$_quranEncBaseUrl/$key/$surah');
     final response = await _client.get(url);
     if (response.statusCode != 200) {
-      throw HttpException('Translation download failed (${response.statusCode}).');
+      throw HttpException(
+        'Translation download failed (${response.statusCode}).',
+      );
     }
     final file = await _translationFile(key, surah);
     await file.writeAsBytes(response.bodyBytes, flush: true);
@@ -124,7 +137,9 @@ class OfflineQuranService {
       final url = Uri.parse('${reciter.baseUrl}/$paddedSurah$paddedAyah.mp3');
       final response = await _client.get(url);
       if (response.statusCode != 200) {
-        throw HttpException('Audio download failed (${response.statusCode}) for $surah:$ayah.');
+        throw HttpException(
+          'Audio download failed (${response.statusCode}) for $surah:$ayah.',
+        );
       }
       final file = await _audioFile(reciterKey, surah, ayah);
       await file.writeAsBytes(response.bodyBytes, flush: true);

@@ -196,7 +196,9 @@ class _DhikrScreenState extends State<DhikrScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selected = _options.firstWhere((item) => item.label == _selectedDhikr);
+    final selected = _options.firstWhere(
+      (item) => item.label == _selectedDhikr,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -211,19 +213,22 @@ class _DhikrScreenState extends State<DhikrScreen> {
                 builder: (context) => AlertDialog(
                   title: const Text("Reset Counter?"),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(context), child: const Text("No")),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text("No"),
+                    ),
                     TextButton(
                       onPressed: () {
                         _resetCounter();
                         Navigator.pop(context);
-                      }, 
-                      child: const Text("Yes")
+                      },
+                      child: const Text("Yes"),
                     ),
                   ],
                 ),
               );
             },
-          )
+          ),
         ],
       ),
       body: Column(
@@ -282,7 +287,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
               ),
             ),
           ],
-          
+
           const Spacer(),
 
           // The "Physical Bead" Tap Area
@@ -338,15 +343,15 @@ class _DhikrScreenState extends State<DhikrScreen> {
               ],
             ),
           ),
-          
+
           const SizedBox(height: 40),
           Text(
             "Tap anywhere on the circle",
             style: theme.textTheme.bodySmall?.copyWith(letterSpacing: 1.2),
           ),
-          
+
           const Spacer(),
-          
+
           // Target Indicator (Small Progress Bar)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 40),
@@ -369,11 +374,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
 }
 
 class DhikrOption {
-  const DhikrOption({
-    required this.label,
-    this.arabic,
-    this.transliteration,
-  });
+  const DhikrOption({required this.label, this.arabic, this.transliteration});
 
   final String label;
   final String? arabic;

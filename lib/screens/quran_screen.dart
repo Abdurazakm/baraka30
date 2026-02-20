@@ -84,8 +84,9 @@ class _QuranScreenState extends State<QuranScreen> {
   Future<void> _loadDownloadPrefs() async {
     _offlineTranslationKey =
         _prefs.getString(DownloadsScreen.translationKeyPref) ??
-            OfflineQuranService.defaultTranslationKey;
-    _offlineReciterKey = _prefs.getString(DownloadsScreen.reciterKeyPref) ??
+        OfflineQuranService.defaultTranslationKey;
+    _offlineReciterKey =
+        _prefs.getString(DownloadsScreen.reciterKeyPref) ??
         OfflineQuranService.defaultReciterKey;
     _useDownloadedTranslations =
         _prefs.getBool(DownloadsScreen.useDownloadedTranslationPref) ?? false;
@@ -839,9 +840,9 @@ class _QuranScreenState extends State<QuranScreen> {
             ),
           ),
         );
-        
+
         // Small space between verses
-        textSpans.add(const TextSpan(text: ' ')); 
+        textSpans.add(const TextSpan(text: ' '));
       }
 
       // Wrap the entire Surah section in a single, justified text block
@@ -849,7 +850,8 @@ class _QuranScreenState extends State<QuranScreen> {
         Directionality(
           textDirection: TextDirection.rtl,
           child: RichText(
-            textAlign: TextAlign.justify, // <-- This creates the physical Mushaf block look
+            textAlign: TextAlign
+                .justify, // <-- This creates the physical Mushaf block look
             text: TextSpan(children: textSpans),
           ),
         ),

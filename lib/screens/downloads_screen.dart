@@ -12,7 +12,8 @@ class DownloadsScreen extends StatefulWidget {
 
   static const String translationKeyPref = 'offline_translation_key';
   static const String reciterKeyPref = 'offline_reciter_key';
-  static const String useDownloadedTranslationPref = 'use_downloaded_translation';
+  static const String useDownloadedTranslationPref =
+      'use_downloaded_translation';
   static const String useDownloadedAudioPref = 'use_downloaded_audio';
 
   @override
@@ -51,21 +52,28 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _activeTranslationKey = prefs.getString(DownloadsScreen.translationKeyPref) ??
+      _activeTranslationKey =
+          prefs.getString(DownloadsScreen.translationKeyPref) ??
           OfflineQuranService.defaultTranslationKey;
-      _activeReciterKey = prefs.getString(DownloadsScreen.reciterKeyPref) ??
+      _activeReciterKey =
+          prefs.getString(DownloadsScreen.reciterKeyPref) ??
           OfflineQuranService.defaultReciterKey;
       _useDownloadedTranslations = _isWeb
-        ? false
-        : (prefs.getBool(DownloadsScreen.useDownloadedTranslationPref) ?? false);
-      _useDownloadedAudio =
-        _isWeb ? false : (prefs.getBool(DownloadsScreen.useDownloadedAudioPref) ?? false);
+          ? false
+          : (prefs.getBool(DownloadsScreen.useDownloadedTranslationPref) ??
+                false);
+      _useDownloadedAudio = _isWeb
+          ? false
+          : (prefs.getBool(DownloadsScreen.useDownloadedAudioPref) ?? false);
     });
   }
 
   Future<void> _savePrefs() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(DownloadsScreen.translationKeyPref, _activeTranslationKey);
+    await prefs.setString(
+      DownloadsScreen.translationKeyPref,
+      _activeTranslationKey,
+    );
     await prefs.setString(DownloadsScreen.reciterKeyPref, _activeReciterKey);
     await prefs.setBool(
       DownloadsScreen.useDownloadedTranslationPref,
@@ -101,7 +109,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
     if (_isWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Offline downloads are not supported on web.')),
+        const SnackBar(
+          content: Text('Offline downloads are not supported on web.'),
+        ),
       );
       return;
     }
@@ -138,7 +148,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       if (_downloadTranslations) {
         for (final key in translations) {
           for (final surah in surahs) {
-            setState(() => _status = 'Downloading translation $key (Surah $surah)...');
+            setState(
+              () => _status = 'Downloading translation $key (Surah $surah)...',
+            );
             await _service.downloadTranslationSurah(key: key, surah: surah);
             completedSteps++;
             setState(() => _progress = completedSteps / totalSteps);
@@ -148,7 +160,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
       if (_downloadAudio) {
         for (final surah in surahs) {
-          final verseCount = _surahList.firstWhere((s) => s.number == surah).verseCount;
+          final verseCount = _surahList
+              .firstWhere((s) => s.number == surah)
+              .verseCount;
           setState(() => _status = 'Downloading audio (Surah $surah)...');
           await _service.downloadAudioSurah(
             reciterKey: _activeReciterKey,
@@ -167,17 +181,17 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Downloads complete.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Downloads complete.')));
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Download failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Download failed: $error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -192,7 +206,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Download Scope', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text(
+          'Download Scope',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         SegmentedButton<DownloadScope>(
           segments: const [
@@ -215,7 +232,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select Surahs', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text(
+          'Select Surahs',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         SizedBox(
           height: 220,
@@ -284,7 +304,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Translations', style: TextStyle(fontWeight: FontWeight.w600)),
+        const Text(
+          'Translations',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         Wrap(
           spacing: 8,
@@ -329,7 +352,8 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           contentPadding: EdgeInsets.zero,
           title: const Text('Use downloaded translations'),
           value: _useDownloadedTranslations,
-          onChanged: (value) => setState(() => _useDownloadedTranslations = value),
+          onChanged: (value) =>
+              setState(() => _useDownloadedTranslations = value),
         ),
       ],
     );
@@ -372,9 +396,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Offline Downloads'),
-      ),
+      appBar: AppBar(title: const Text('Offline Downloads')),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -395,19 +417,26 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             if (_scope == DownloadScope.surah) _buildSurahList(),
             if (_scope == DownloadScope.juz) _buildJuzList(),
             if (_scope == DownloadScope.all)
-              const Text('All surahs will be downloaded.', style: TextStyle(fontWeight: FontWeight.w600)),
+              const Text(
+                'All surahs will be downloaded.',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             const SizedBox(height: 16),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Download translations'),
               value: _downloadTranslations,
-              onChanged: _isWeb ? null : (value) => setState(() => _downloadTranslations = value),
+              onChanged: _isWeb
+                  ? null
+                  : (value) => setState(() => _downloadTranslations = value),
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Download audio'),
               value: _downloadAudio,
-              onChanged: _isWeb ? null : (value) => setState(() => _downloadAudio = value),
+              onChanged: _isWeb
+                  ? null
+                  : (value) => setState(() => _downloadAudio = value),
             ),
             const SizedBox(height: 12),
             if (_downloadTranslations) _buildTranslationSelector(),
