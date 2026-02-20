@@ -15,6 +15,8 @@ class QuranScreen extends StatefulWidget {
 
 class _QuranScreenState extends State<QuranScreen> {
   static const String _highlightedVersesKey = 'quran_highlighted_verses';
+  static const String _bismillahText =
+      'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
   late PageController _pageController;
   int _currentPage = 1;
@@ -724,7 +726,7 @@ class _QuranScreenState extends State<QuranScreen> {
       width: double.infinity,
       padding: const EdgeInsets.only(bottom: 16.0),
       child: const Text(
-        'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ',
+        _bismillahText,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'Uthmanic',
@@ -733,6 +735,66 @@ class _QuranScreenState extends State<QuranScreen> {
         ),
       ),
     );
+  }
+
+  String _stripBismillahPrefix(String text) {
+    final trimmed = text.trimLeft();
+    final normalizedTarget = _normalizeArabic(_bismillahText);
+    String normalized = '';
+    int cutIndex = 0;
+
+    for (int i = 0; i < trimmed.length; i++) {
+      final chunk = _normalizeArabic(trimmed[i]);
+      if (chunk.isEmpty) {
+        cutIndex = i + 1;
+        continue;
+      }
+      normalized += chunk;
+      cutIndex = i + 1;
+      if (normalized.length >= normalizedTarget.length) {
+        break;
+      }
+    }
+
+    if (normalized == normalizedTarget) {
+      return trimmed.substring(cutIndex).trimLeft();
+    }
+
+    return text;
+  }
+
+  String _normalizeArabic(String input) {
+    final buffer = StringBuffer();
+    for (int i = 0; i < input.length; i++) {
+      final code = input.codeUnitAt(i);
+      if (_isArabicDiacritic(code) || code == 0x0640) {
+        continue;
+      }
+      final mapped = _normalizeArabicChar(code);
+      if (mapped != null) {
+        buffer.write(String.fromCharCode(mapped));
+      }
+    }
+    return buffer.toString();
+  }
+
+  bool _isArabicDiacritic(int code) {
+    return (code >= 0x0610 && code <= 0x061A) ||
+        (code >= 0x064B && code <= 0x065F) ||
+        code == 0x0670 ||
+        (code >= 0x06D6 && code <= 0x06ED);
+  }
+
+  int? _normalizeArabicChar(int code) {
+    switch (code) {
+      case 0x0622: // آ
+      case 0x0623: // أ
+      case 0x0625: // إ
+      case 0x0671: // ٱ
+        return 0x0627; // ا
+      default:
+        return code;
+    }
   }
 
   Widget _buildMushafPage(int pageNum) {
@@ -803,46 +865,53 @@ class _QuranScreenState extends State<QuranScreen> {
           bgColor = Colors.amber.withValues(alpha: 0.18);
         }
 
-        // Add the actual Arabic verse text
-        textSpans.add(
-          TextSpan(
-            text: '${v.text} ',
-            style: TextStyle(
-              fontFamily: 'Uthmanic',
-              fontSize: fontSize,
-              height: 1.8,
-              color: Colors.black87,
-              backgroundColor: bgColor, // Highlight spans across line breaks
+        final displayText =
+            (v.verseNumber == 1 && surahNumber != 1 && surahNumber != 9)
+                ? _stripBismillahPrefix(v.text)
+                : v.text;
+
+        if (displayText.trim().isNotEmpty) {
+          // Add the actual Arabic verse text
+          textSpans.add(
+            TextSpan(
+              text: '$displayText ',
+              style: TextStyle(
+                fontFamily: 'Uthmanic',
+                fontSize: fontSize,
+                height: 1.8,
+                color: Colors.black87,
+                backgroundColor: bgColor, // Highlight spans across line breaks
+              ),
+              recognizer: LongPressGestureRecognizer()
+                ..onLongPress = () {
+                  _handleVerseLongPress(
+                    surahNumber: surahNumber,
+                    verseNumber: v.verseNumber,
+                  );
+                },
             ),
-            recognizer: LongPressGestureRecognizer()
-              ..onLongPress = () {
-                _handleVerseLongPress(
+          );
+
+          // Add the Ayah end marker (the circle with the number)
+          textSpans.add(
+            WidgetSpan(
+              alignment: PlaceholderAlignment.middle,
+              child: GestureDetector(
+                onLongPress: () => _handleVerseLongPress(
                   surahNumber: surahNumber,
                   verseNumber: v.verseNumber,
-                );
-              },
-          ),
-        );
-
-        // Add the Ayah end marker (the circle with the number)
-        textSpans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: GestureDetector(
-              onLongPress: () => _handleVerseLongPress(
-                surahNumber: surahNumber,
-                verseNumber: v.verseNumber,
-              ),
-              child: Container(
-                color: bgColor,
-                child: _buildAyahEnd(v.verseNumber),
+                ),
+                child: Container(
+                  color: bgColor,
+                  child: _buildAyahEnd(v.verseNumber),
+                ),
               ),
             ),
-          ),
-        );
+          );
 
-        // Small space between verses
-        textSpans.add(const TextSpan(text: ' '));
+          // Small space between verses
+          textSpans.add(const TextSpan(text: ' '));
+        }
       }
 
       // Wrap the entire Surah section in a single, justified text block
@@ -890,6 +959,15 @@ class _QuranScreenState extends State<QuranScreen> {
                 surahNumber: surahInPage.surahNumber!,
                 verseNumber: v.verseNumber,
               );
+              final displayText = (v.verseNumber == 1 &&
+                      surahInPage.surahNumber! != 1 &&
+                      surahInPage.surahNumber! != 9)
+                  ? _stripBismillahPrefix(v.text)
+                  : v.text;
+
+              if (displayText.trim().isEmpty) {
+                return const SizedBox.shrink();
+              }
 
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
@@ -920,7 +998,7 @@ class _QuranScreenState extends State<QuranScreen> {
                         text: TextSpan(
                           children: [
                             TextSpan(
-                              text: '${v.text} ',
+                              text: '$displayText ',
                               style: TextStyle(
                                 fontFamily: 'Uthmanic',
                                 fontSize: arabicSize * 0.9,
