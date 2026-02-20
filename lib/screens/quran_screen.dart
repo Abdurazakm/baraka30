@@ -96,7 +96,8 @@ class _QuranScreenState extends State<QuranScreen> {
       return;
     }
 
-    final storedPages = _prefs.getStringList('quran_pages_read_today') ?? <String>[];
+    final storedPages =
+        _prefs.getStringList('quran_pages_read_today') ?? <String>[];
     _progressDateKey = today;
     _pagesReadToday = storedPages.length;
   }
@@ -113,7 +114,8 @@ class _QuranScreenState extends State<QuranScreen> {
       return;
     }
 
-    final storedPages = _prefs.getStringList('quran_pages_read_month') ?? <String>[];
+    final storedPages =
+        _prefs.getStringList('quran_pages_read_month') ?? <String>[];
     _progressMonthKey = monthKey;
     _pagesReadMonth = storedPages.length;
   }
@@ -144,7 +146,8 @@ class _QuranScreenState extends State<QuranScreen> {
       await _prefs.setStringList('quran_pages_read_month', <String>[]);
     }
 
-    final storedPages = _prefs.getStringList('quran_pages_read_today') ?? <String>[];
+    final storedPages =
+        _prefs.getStringList('quran_pages_read_today') ?? <String>[];
     final pageKey = pageNum.toString();
     if (!storedPages.contains(pageKey)) {
       storedPages.add(pageKey);
@@ -158,7 +161,8 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Future<void> _trackMonthlyPageRead(String pageKey) async {
-    final storedPages = _prefs.getStringList('quran_pages_read_month') ?? <String>[];
+    final storedPages =
+        _prefs.getStringList('quran_pages_read_month') ?? <String>[];
     if (!storedPages.contains(pageKey)) {
       storedPages.add(pageKey);
       await _prefs.setStringList('quran_pages_read_month', storedPages);
@@ -261,7 +265,9 @@ class _QuranScreenState extends State<QuranScreen> {
               final isSelected = language == _selectedTranslationLanguage;
               return ListTile(
                 title: Text(language.value),
-                trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.green) : null,
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
                 onTap: () => Navigator.pop(context, language),
               );
             },
@@ -287,7 +293,10 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Future<void> _saveHighlightedVerses() async {
-    await _prefs.setStringList(_highlightedVersesKey, _highlightedVerses.toList());
+    await _prefs.setStringList(
+      _highlightedVersesKey,
+      _highlightedVerses.toList(),
+    );
   }
 
   String _buildVerseAudioUrl({
@@ -442,7 +451,10 @@ class _QuranScreenState extends State<QuranScreen> {
     final key = _verseKey(surahNumber, verseNumber);
     final isHighlighted = _highlightedVerses.contains(key);
     final isPlaying = _playingVerseKey == key;
-    final verse = Quran.getVerse(surahNumber: surahNumber, verseNumber: verseNumber);
+    final verse = Quran.getVerse(
+      surahNumber: surahNumber,
+      verseNumber: verseNumber,
+    );
 
     final selected = await showModalBottomSheet<String>(
       context: context,
@@ -453,12 +465,20 @@ class _QuranScreenState extends State<QuranScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(isHighlighted ? Icons.highlight_off : Icons.highlight),
-                title: Text(isHighlighted ? 'Remove Highlight' : 'Highlight Verse'),
+                leading: Icon(
+                  isHighlighted ? Icons.highlight_off : Icons.highlight,
+                ),
+                title: Text(
+                  isHighlighted ? 'Remove Highlight' : 'Highlight Verse',
+                ),
                 onTap: () => Navigator.pop(context, 'highlight'),
               ),
               ListTile(
-                leading: Icon(isPlaying ? Icons.stop_circle_outlined : Icons.play_circle_fill),
+                leading: Icon(
+                  isPlaying
+                      ? Icons.stop_circle_outlined
+                      : Icons.play_circle_fill,
+                ),
                 title: Text(isPlaying ? 'Stop Audio' : 'Play Audio'),
                 onTap: () => Navigator.pop(context, 'audio'),
               ),
@@ -479,12 +499,18 @@ class _QuranScreenState extends State<QuranScreen> {
     }
 
     if (selected == 'highlight') {
-      await _toggleVerseHighlight(surahNumber: surahNumber, verseNumber: verseNumber);
+      await _toggleVerseHighlight(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
       return;
     }
 
     if (selected == 'audio') {
-      await _toggleVerseAudio(surahNumber: surahNumber, verseNumber: verseNumber);
+      await _toggleVerseAudio(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
       return;
     }
 
@@ -510,9 +536,9 @@ class _QuranScreenState extends State<QuranScreen> {
   void _jumpToBookmark() {
     if (_bookmarkedPage <= 0) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No bookmark saved yet.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No bookmark saved yet.')));
       }
       return;
     }
@@ -548,7 +574,9 @@ class _QuranScreenState extends State<QuranScreen> {
             onPressed: _jumpToBookmark,
           ),
           IconButton(
-            icon: Icon(_showTranslation ? Icons.g_translate : Icons.translate_outlined),
+            icon: Icon(
+              _showTranslation ? Icons.g_translate : Icons.translate_outlined,
+            ),
             onPressed: _toggleTranslation,
             tooltip: 'Toggle Translation',
           ),
@@ -559,7 +587,9 @@ class _QuranScreenState extends State<QuranScreen> {
           ),
           IconButton(
             icon: Icon(
-              _bookmarkedPage == _currentPage ? Icons.bookmark : Icons.bookmark_border,
+              _bookmarkedPage == _currentPage
+                  ? Icons.bookmark
+                  : Icons.bookmark_border,
               color: _bookmarkedPage == _currentPage ? Colors.amber : null,
             ),
             onPressed: _toggleBookmark,
@@ -619,7 +649,11 @@ class _QuranScreenState extends State<QuranScreen> {
           ),
           child: SingleChildScrollView(
             child: _showTranslation
-                ? _buildTranslationMode(pageData, mushafFontSize, translationFontSize)
+                ? _buildTranslationMode(
+                    pageData,
+                    mushafFontSize,
+                    translationFontSize,
+                  )
                 : _buildReadingMode(pageData, mushafFontSize),
           ),
         );
@@ -659,13 +693,16 @@ class _QuranScreenState extends State<QuranScreen> {
                   verseNumber: v.verseNumber,
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 2,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: isPlayingVerse
                         ? Colors.green.withValues(alpha: 0.14)
                         : isHighlightedVerse
-                            ? Colors.amber.withValues(alpha: 0.18)
-                            : Colors.transparent,
+                        ? Colors.amber.withValues(alpha: 0.18)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: RichText(
@@ -701,7 +738,11 @@ class _QuranScreenState extends State<QuranScreen> {
     );
   }
 
-  Widget _buildTranslationMode(List<dynamic> pageData, double arabicSize, double transSize) {
+  Widget _buildTranslationMode(
+    List<dynamic> pageData,
+    double arabicSize,
+    double transSize,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: pageData.map<Widget>((surahInPage) {
@@ -713,7 +754,10 @@ class _QuranScreenState extends State<QuranScreen> {
             if (versesList.isNotEmpty && versesList.first.verseNumber == 1)
               _buildSurahHeader(surahInPage.surahNumber!),
             ...versesList.map((v) {
-              final verseKey = _verseKey(surahInPage.surahNumber!, v.verseNumber);
+              final verseKey = _verseKey(
+                surahInPage.surahNumber!,
+                v.verseNumber,
+              );
               final isPlayingVerse = _playingVerseKey == verseKey;
               final isHighlightedVerse = _highlightedVerses.contains(verseKey);
               final translation = _getTranslationText(
@@ -729,13 +773,16 @@ class _QuranScreenState extends State<QuranScreen> {
                 ),
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 24.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: isPlayingVerse
                         ? Colors.green.withValues(alpha: 0.14)
                         : isHighlightedVerse
-                            ? Colors.amber.withValues(alpha: 0.18)
-                            : Colors.transparent,
+                        ? Colors.amber.withValues(alpha: 0.18)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -838,8 +885,9 @@ class _QuranScreenState extends State<QuranScreen> {
     final dailyTarget = _dailyTargetPages <= 0 ? 1.0 : _dailyTargetPages;
     final dailyProgress = (_pagesReadToday / dailyTarget).clamp(0.0, 1.0);
     final monthlyTarget = _rounds * 604;
-    final monthlyProgress =
-        monthlyTarget <= 0 ? 0.0 : (_pagesReadMonth / monthlyTarget).clamp(0.0, 1.0);
+    final monthlyProgress = monthlyTarget <= 0
+        ? 0.0
+        : (_pagesReadMonth / monthlyTarget).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 25),
@@ -917,7 +965,9 @@ class _QuranScreenState extends State<QuranScreen> {
             leading: const Icon(Icons.bookmark),
             title: const Text('Go to Bookmark'),
             subtitle: Text(
-              _bookmarkedPage > 0 ? 'Page $_bookmarkedPage' : 'No bookmark saved',
+              _bookmarkedPage > 0
+                  ? 'Page $_bookmarkedPage'
+                  : 'No bookmark saved',
             ),
             onTap: _jumpToBookmark,
           ),
@@ -930,12 +980,18 @@ class _QuranScreenState extends State<QuranScreen> {
                 final surah = _surahList[index];
                 return ListTile(
                   leading: CircleAvatar(
-                    child: Text('${index + 1}', style: const TextStyle(fontSize: 12)),
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
                   title: Text(surah.name),
                   subtitle: Text(surah.nameEnglish),
                   onTap: () {
-                    int startPage = Quran.getPageNumber(surahNumber: index + 1, verseNumber: 1);
+                    int startPage = Quran.getPageNumber(
+                      surahNumber: index + 1,
+                      verseNumber: 1,
+                    );
                     _jumpToPage(startPage);
                   },
                 );
