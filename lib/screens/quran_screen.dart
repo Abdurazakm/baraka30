@@ -15,6 +15,8 @@ class QuranScreen extends StatefulWidget {
 
 class _QuranScreenState extends State<QuranScreen> {
   static const String _highlightedVersesKey = 'quran_highlighted_verses';
+  static const String _continuousPlayPrefKey = 'quran_continuous_play_pref';
+  static const String _audioHintSeenPrefKey = 'quran_audio_hint_seen';
   static const String _bismillahText = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 
   late PageController _pageController;
@@ -35,6 +37,7 @@ class _QuranScreenState extends State<QuranScreen> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? _playingVerseKey;
   bool _isAudioBusy = false;
+  bool _isContinuousPlaybackActive = false;
   final Set<String> _highlightedVerses = <String>{};
   final OfflineQuranService _offlineService = OfflineQuranService();
   final Map<int, Map<int, String>> _offlineTranslationCache = {};
@@ -42,17 +45,14 @@ class _QuranScreenState extends State<QuranScreen> {
   String _offlineReciterKey = OfflineQuranService.defaultReciterKey;
   bool _useDownloadedTranslations = false;
   bool _useDownloadedAudio = false;
+  bool _preferContinuousPlayback = false;
+  bool _showAudioHint = true;
 
   @override
   void initState() {
     super.initState();
     _initData();
-    _audioPlayer.onPlayerComplete.listen((_) {
-      if (!mounted) {
-        return;
-      }
-      setState(() => _playingVerseKey = null);
-    });
+    _audioPlayer.onPlayerComplete.listen((_) => _handlePlayerComplete());
   }
 
   @override
@@ -69,6 +69,9 @@ class _QuranScreenState extends State<QuranScreen> {
     _currentPage = _prefs.getInt('quran_current_page') ?? 1;
     _bookmarkedPage = _prefs.getInt('quran_bookmark') ?? -1;
     _showTranslation = _prefs.getBool('show_translation') ?? true;
+    _preferContinuousPlayback =
+      _prefs.getBool(_continuousPlayPrefKey) ?? false;
+    _showAudioHint = !(_prefs.getBool(_audioHintSeenPrefKey) ?? false);
     _selectedTranslationLanguage = _getSavedTranslationLanguage();
     _loadHighlightedVerses();
     await _loadDownloadPrefs();
@@ -77,7 +80,9 @@ class _QuranScreenState extends State<QuranScreen> {
     await _loadDailyProgress();
     await _loadMonthlyProgress();
 
-    _pageController = PageController(initialPage: _currentPage - 1);
+    _pageController = PageController(
+      initialPage: _pageIndexForNumber(_currentPage),
+    );
     _prefetchOfflineTranslationsForPage(_currentPage);
     setState(() => _isLoading = false);
   }
@@ -188,7 +193,7 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   void _onPageChanged(int pageIndex) {
-    int pageNum = pageIndex + 1;
+    int pageNum = _pageNumberForIndex(pageIndex);
     setState(() => _currentPage = pageNum);
     _prefs.setInt('quran_current_page', pageNum);
     _trackPageRead(pageNum);
@@ -411,40 +416,20 @@ class _QuranScreenState extends State<QuranScreen> {
         if (mounted) {
           setState(() {
             _playingVerseKey = null;
+            _isContinuousPlaybackActive = false;
           });
         }
         return;
       }
 
-      if (_useDownloadedAudio) {
-        final file = await _offlineService.getOfflineAudioFile(
-          reciterKey: _offlineReciterKey,
-          surah: surahNumber,
-          ayah: verseNumber,
-        );
-        if (file != null) {
-          await _audioPlayer.stop();
-          if (!mounted) {
-            return;
-          }
-          setState(() => _playingVerseKey = selectedKey);
-          await _audioPlayer.play(DeviceFileSource(file.path));
-          return;
-        }
+      if (_isContinuousPlaybackActive && mounted) {
+        setState(() => _isContinuousPlaybackActive = false);
       }
 
-      final url = _buildVerseAudioUrl(
+      await _playVerseAudio(
         surahNumber: surahNumber,
         verseNumber: verseNumber,
       );
-
-      await _audioPlayer.stop();
-      if (!mounted) {
-        return;
-      }
-
-      setState(() => _playingVerseKey = selectedKey);
-      await _audioPlayer.play(UrlSource(url));
     } catch (_) {
       if (!mounted) {
         return;
@@ -457,6 +442,225 @@ class _QuranScreenState extends State<QuranScreen> {
       if (mounted) {
         setState(() => _isAudioBusy = false);
       }
+    }
+  }
+
+  Future<void> _handleVerseTap({
+    required int surahNumber,
+    required int verseNumber,
+  }) async {
+    if (_preferContinuousPlayback) {
+      final selectedKey = _verseKey(surahNumber, verseNumber);
+      final isThisVersePlaying = _playingVerseKey == selectedKey;
+      if (_isContinuousPlaybackActive && isThisVersePlaying) {
+        await _stopContinuousPlayback();
+        return;
+      }
+      await _startContinuousPlayback(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
+      return;
+    }
+
+    await _toggleVerseAudio(surahNumber: surahNumber, verseNumber: verseNumber);
+  }
+
+  Future<void> _toggleContinuousPlayPreference() async {
+    final next = !_preferContinuousPlayback;
+    setState(() => _preferContinuousPlayback = next);
+    await _prefs.setBool(_continuousPlayPrefKey, next);
+  }
+
+  Future<void> _startContinuousPlayback({
+    required int surahNumber,
+    required int verseNumber,
+  }) async {
+    if (_isAudioBusy) {
+      return;
+    }
+
+    setState(() {
+      _isAudioBusy = true;
+      _isContinuousPlaybackActive = true;
+    });
+
+    try {
+      await _playVerseAudio(surahNumber: surahNumber, verseNumber: verseNumber);
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _playingVerseKey = null;
+        _isContinuousPlaybackActive = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not start continuous audio.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isAudioBusy = false);
+      }
+    }
+  }
+
+  Future<void> _stopContinuousPlayback() async {
+    if (_isAudioBusy) {
+      return;
+    }
+
+    setState(() => _isAudioBusy = true);
+    try {
+      await _audioPlayer.stop();
+      if (mounted) {
+        setState(() {
+          _playingVerseKey = null;
+          _isContinuousPlaybackActive = false;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isAudioBusy = false);
+      }
+    }
+  }
+
+  Future<void> _playVerseAudio({
+    required int surahNumber,
+    required int verseNumber,
+  }) async {
+    final selectedKey = _verseKey(surahNumber, verseNumber);
+
+    if (_useDownloadedAudio) {
+      final file = await _offlineService.getOfflineAudioFile(
+        reciterKey: _offlineReciterKey,
+        surah: surahNumber,
+        ayah: verseNumber,
+      );
+      if (file != null) {
+        await _audioPlayer.stop();
+        if (!mounted) {
+          return;
+        }
+        setState(() => _playingVerseKey = selectedKey);
+        await _audioPlayer.play(DeviceFileSource(file.path));
+        await _markAudioHintSeenOnce();
+        return;
+      }
+    }
+
+    final url = _buildVerseAudioUrl(
+      surahNumber: surahNumber,
+      verseNumber: verseNumber,
+    );
+
+    await _audioPlayer.stop();
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _playingVerseKey = selectedKey);
+    await _audioPlayer.play(UrlSource(url));
+    await _markAudioHintSeenOnce();
+  }
+
+  Future<void> _markAudioHintSeenOnce() async {
+    if (!_showAudioHint) {
+      return;
+    }
+
+    await _prefs.setBool(_audioHintSeenPrefKey, true);
+    if (mounted) {
+      setState(() => _showAudioHint = false);
+    }
+  }
+
+  Future<void> _handlePlayerComplete() async {
+    if (!mounted) {
+      return;
+    }
+
+    final currentKey = _playingVerseKey;
+    if (!_isContinuousPlaybackActive || currentKey == null) {
+      setState(() => _playingVerseKey = null);
+      return;
+    }
+
+    final nextVerse = _getNextVerse(currentKey);
+    if (nextVerse == null) {
+      setState(() {
+        _playingVerseKey = null;
+        _isContinuousPlaybackActive = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Continuous playback finished.')),
+      );
+      return;
+    }
+
+    try {
+      await _playVerseAudio(
+        surahNumber: nextVerse.$1,
+        verseNumber: nextVerse.$2,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _playingVerseKey = null;
+        _isContinuousPlaybackActive = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not continue playback.')),
+      );
+    }
+  }
+
+  (int, int)? _getNextVerse(String currentKey) {
+    final current = _parseVerseKey(currentKey);
+    if (current == null) {
+      return null;
+    }
+
+    final currentSurah = current.$1;
+    final currentVerse = current.$2;
+
+    if (_verseExists(currentSurah, currentVerse + 1)) {
+      return (currentSurah, currentVerse + 1);
+    }
+
+    for (int surah = currentSurah + 1; surah <= 114; surah++) {
+      if (_verseExists(surah, 1)) {
+        return (surah, 1);
+      }
+    }
+
+    return null;
+  }
+
+  (int, int)? _parseVerseKey(String key) {
+    final parts = key.split(':');
+    if (parts.length != 2) {
+      return null;
+    }
+
+    final surah = int.tryParse(parts[0]);
+    final verse = int.tryParse(parts[1]);
+    if (surah == null || verse == null) {
+      return null;
+    }
+
+    return (surah, verse);
+  }
+
+  bool _verseExists(int surahNumber, int verseNumber) {
+    try {
+      Quran.getVerse(surahNumber: surahNumber, verseNumber: verseNumber);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -550,6 +754,7 @@ class _QuranScreenState extends State<QuranScreen> {
     final key = _verseKey(surahNumber, verseNumber);
     final isHighlighted = _highlightedVerses.contains(key);
     final isPlaying = _playingVerseKey == key;
+    final isContinuousPlaying = isPlaying && _isContinuousPlaybackActive;
     final verse = Quran.getVerse(
       surahNumber: surahNumber,
       verseNumber: verseNumber,
@@ -582,6 +787,20 @@ class _QuranScreenState extends State<QuranScreen> {
                 onTap: () => Navigator.pop(context, 'audio'),
               ),
               ListTile(
+                leading: Icon(
+                  isContinuousPlaying
+                      ? Icons.repeat_one_on
+                      : Icons.playlist_play,
+                ),
+                title: Text(
+                  isContinuousPlaying
+                      ? 'Stop Continuous Play'
+                      : 'Play Continuously from Here',
+                ),
+                subtitle: const Text('Keeps playing next verses automatically'),
+                onTap: () => Navigator.pop(context, 'continuous'),
+              ),
+              ListTile(
                 leading: const Icon(Icons.translate),
                 title: const Text('Show Translation'),
                 subtitle: Text(_selectedTranslationLanguage.value),
@@ -610,6 +829,18 @@ class _QuranScreenState extends State<QuranScreen> {
         surahNumber: surahNumber,
         verseNumber: verseNumber,
       );
+      return;
+    }
+
+    if (selected == 'continuous') {
+      if (isContinuousPlaying) {
+        await _stopContinuousPlayback();
+      } else {
+        await _startContinuousPlayback(
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+        );
+      }
       return;
     }
 
@@ -649,8 +880,85 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   void _jumpToPage(int pageNum) {
-    _pageController.jumpToPage(pageNum - 1);
+    _pageController.jumpToPage(_pageIndexForNumber(pageNum));
     if (Navigator.canPop(context)) Navigator.pop(context);
+  }
+
+  int _pageIndexForNumber(int pageNum) {
+    final clamped = pageNum.clamp(1, 604);
+    return 604 - clamped;
+  }
+
+  int _pageNumberForIndex(int index) {
+    final clamped = index.clamp(0, 603);
+    return 604 - clamped;
+  }
+
+  Future<void> _showPageSearchDialog() async {
+    final selectedPage = await showDialog<int>(
+      context: context,
+      builder: (context) {
+        final controller = TextEditingController(text: '$_currentPage');
+        String? errorText;
+
+        return StatefulBuilder(
+          builder: (context, setLocalState) {
+            return AlertDialog(
+              title: const Text('Go to Page'),
+              content: TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Page number',
+                  hintText: '1 - 604',
+                  errorText: errorText,
+                ),
+                onSubmitted: (_) {
+                  final page = int.tryParse(controller.text.trim());
+                  if (page == null || page < 1 || page > 604) {
+                    setLocalState(() {
+                      errorText = 'Enter a number from 1 to 604';
+                    });
+                    return;
+                  }
+                  Navigator.pop(context, page);
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    controller.dispose();
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final page = int.tryParse(controller.text.trim());
+                    if (page == null || page < 1 || page > 604) {
+                      setLocalState(() {
+                        errorText = 'Enter a number from 1 to 604';
+                      });
+                      return;
+                    }
+                    controller.dispose();
+                    Navigator.pop(context, page);
+                  },
+                  child: const Text('Go'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted || selectedPage == null) {
+      return;
+    }
+
+    _jumpToPage(selectedPage);
   }
 
   @override
@@ -667,6 +975,11 @@ class _QuranScreenState extends State<QuranScreen> {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.manage_search),
+            tooltip: 'Go to Page',
+            onPressed: _showPageSearchDialog,
+          ),
           IconButton(
             icon: const Icon(Icons.download_for_offline),
             tooltip: 'Offline Downloads',
@@ -691,6 +1004,16 @@ class _QuranScreenState extends State<QuranScreen> {
             ),
             onPressed: _toggleTranslation,
             tooltip: 'Toggle Translation',
+          ),
+          IconButton(
+            icon: Icon(
+              _preferContinuousPlayback ? Icons.repeat_on : Icons.repeat,
+              color: _preferContinuousPlayback ? Colors.green : null,
+            ),
+            tooltip: _preferContinuousPlayback
+                ? 'Continuous Tap Play: ON'
+                : 'Continuous Tap Play: OFF',
+            onPressed: _toggleContinuousPlayPreference,
           ),
           IconButton(
             icon: const Icon(Icons.language),
@@ -896,6 +1219,10 @@ class _QuranScreenState extends State<QuranScreen> {
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: GestureDetector(
+                onTap: () => _handleVerseTap(
+                  surahNumber: surahNumber,
+                  verseNumber: v.verseNumber,
+                ),
                 onLongPress: () => _handleVerseLongPress(
                   surahNumber: surahNumber,
                   verseNumber: v.verseNumber,
@@ -971,6 +1298,10 @@ class _QuranScreenState extends State<QuranScreen> {
 
               return GestureDetector(
                 behavior: HitTestBehavior.opaque,
+                onTap: () => _handleVerseTap(
+                  surahNumber: surahInPage.surahNumber!,
+                  verseNumber: v.verseNumber,
+                ),
                 onLongPress: () => _handleVerseLongPress(
                   surahNumber: surahInPage.surahNumber!,
                   verseNumber: v.verseNumber,
@@ -1024,11 +1355,13 @@ class _QuranScreenState extends State<QuranScreen> {
                         ),
                       ),
                       if (isPlayingVerse)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 8),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            'Playing verse audio... (long-press and choose Stop Audio)',
-                            style: TextStyle(
+                            _isContinuousPlaybackActive
+                                ? 'Continuous playback active... (long-press and choose Stop Continuous Play)'
+                                : 'Playing verse audio... (long-press and choose Stop Audio)',
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Colors.green,
                               fontWeight: FontWeight.w600,
@@ -1102,6 +1435,18 @@ class _QuranScreenState extends State<QuranScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (_showAudioHint) ...[
+            const Text(
+              'Tip: Tap verse to play • Long-press ayah marker for options',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+          ],
           _buildProgressRow(
             'DAILY',
             dailyProgress,
@@ -1174,6 +1519,12 @@ class _QuranScreenState extends State<QuranScreen> {
                   : 'No bookmark saved',
             ),
             onTap: _jumpToBookmark,
+          ),
+          ListTile(
+            leading: const Icon(Icons.manage_search),
+            title: const Text('Go to Page'),
+            subtitle: const Text('Jump to any page (1-604)'),
+            onTap: _showPageSearchDialog,
           ),
           const Divider(height: 1),
           Expanded(

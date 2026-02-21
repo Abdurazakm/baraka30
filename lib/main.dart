@@ -5,6 +5,7 @@ import 'screens/home_screen.dart';
 import 'screens/planner_screen.dart';
 import 'screens/quran_screen.dart';
 import 'services/notification_service.dart';
+import 'services/app_language.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,12 +16,17 @@ Future<void> main() async {
   // Initialize Notification Service
   await NotificationService.instance.initialize();
   await NotificationService.instance.scheduleSuhoorIftarIfConfigured();
+
+  final languageController = AppLanguageController();
+  await languageController.load();
   
-  runApp(BarakaApp());
+  runApp(BarakaApp(languageController: languageController));
 }
 
 class BarakaApp extends StatelessWidget {
-  BarakaApp({super.key});
+  BarakaApp({super.key, required this.languageController});
+
+  final AppLanguageController languageController;
 
   final ValueNotifier<int> _roundsGoalNotifier = ValueNotifier<int>(1);
 
@@ -46,11 +52,13 @@ class BarakaApp extends StatelessWidget {
       tertiary: const Color(0xFF4CAF50),
     );
 
-    return MaterialApp(
-      title: 'Baraka30',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
-      theme: ThemeData(
+    return AppLanguageScope(
+      controller: languageController,
+      child: MaterialApp(
+        title: AppStrings.forLanguage(languageController.language).appTitle(),
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.system,
+        theme: ThemeData(
         useMaterial3: true,
         colorScheme: lightScheme,
         // Fix: Use surface for background color
@@ -96,23 +104,25 @@ class BarakaApp extends StatelessWidget {
           }),
         ),
       ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: darkScheme,
-        scaffoldBackgroundColor: darkScheme.surface,
-        fontFamily: 'Serif',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+        darkTheme: ThemeData(
+          useMaterial3: true,
+          colorScheme: darkScheme,
+          scaffoldBackgroundColor: darkScheme.surface,
+          fontFamily: 'Serif',
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
         ),
+        home: AppShell(roundsGoalNotifier: _roundsGoalNotifier),
+        routes: {
+          '/home': (_) => HomeScreen(roundsGoalListenable: _roundsGoalNotifier),
+          '/dhikr': (_) => const DhikrScreen(),
+          '/quran': (_) => const QuranScreen(),
+          '/planner': (_) =>
+              PlannerScreen(roundsGoalNotifier: _roundsGoalNotifier),
+        },
       ),
-      home: AppShell(roundsGoalNotifier: _roundsGoalNotifier),
-      routes: {
-        '/home': (_) => HomeScreen(roundsGoalListenable: _roundsGoalNotifier),
-        '/dhikr': (_) => const DhikrScreen(),
-        '/quran': (_) => const QuranScreen(),
-        '/planner': (_) => PlannerScreen(roundsGoalNotifier: _roundsGoalNotifier),
-      },
     );
   }
 }
@@ -138,6 +148,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     return Scaffold(
       extendBody: true, 
       body: IndexedStack(
@@ -152,26 +163,26 @@ class _AppShellState extends State<AppShell> {
             _index = value;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined), 
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+            icon: const Icon(Icons.home_outlined), 
+            selectedIcon: const Icon(Icons.home_rounded),
+            label: strings.navHome(),
           ),
           NavigationDestination(
-            icon: Icon(Icons.fingerprint_outlined),
-            selectedIcon: Icon(Icons.fingerprint_rounded),
-            label: 'Dhikr',
+            icon: const Icon(Icons.fingerprint_outlined),
+            selectedIcon: const Icon(Icons.fingerprint_rounded),
+            label: strings.navDhikr(),
           ),
           NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book_rounded),
-            label: 'Quran',
+            icon: const Icon(Icons.menu_book_outlined),
+            selectedIcon: const Icon(Icons.menu_book_rounded),
+            label: strings.navQuran(),
           ),
           NavigationDestination(
-            icon: Icon(Icons.event_note_outlined),
-            selectedIcon: Icon(Icons.event_note_rounded),
-            label: 'Planner',
+            icon: const Icon(Icons.event_note_outlined),
+            selectedIcon: const Icon(Icons.event_note_rounded),
+            label: strings.navPlanner(),
           ),
         ],
       ),

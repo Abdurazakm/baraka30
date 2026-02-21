@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:adhan/adhan.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:quran_flutter/quran_flutter.dart';
 import 'package:geolocator/geolocator.dart';
@@ -12,6 +13,7 @@ import 'dart:math';
 import '../data/duas.dart';
 import '../data/hadith.dart';
 import '../data/daily_text.dart';
+import '../services/app_language.dart';
 
 // Widgets
 import '../widgets/ayah_card.dart';
@@ -27,6 +29,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
+  static const String _lastLocationUpdatedPrefKey = 'last_location_updated_ms';
   static const List<String> _hijriMonthNames = [
     'Muharram',
     'Safar',
@@ -51,10 +54,14 @@ class HomeScreenState extends State<HomeScreen> {
   late final PageController _inspirationController;
   int _inspirationPage = 0;
 
-  static const double _defaultLat = 9.03;
-  static const double _defaultLng = 38.74;
-  double _lat = _defaultLat;
-  double _lng = _defaultLng;
+  double? _lat;
+  double? _lng;
+  bool _isRequestingLocation = false;
+  bool _isLocationServiceDisabled = false;
+  bool _isPermissionDeniedForever = false;
+  DateTime? _lastLocationUpdatedAt;
+  String _localTimeZoneLabel = 'Local Time';
+  _LocationStatus _locationStatus = _LocationStatus.required;
 
   final List<_ChecklistEntry> _checklist = [];
 
@@ -99,8 +106,13 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadData() async {
     _prefs = await SharedPreferences.getInstance();
-    _lat = _prefs.getDouble('user_lat') ?? _defaultLat;
-    _lng = _prefs.getDouble('user_lng') ?? _defaultLng;
+    final lastLocationUpdatedMs = _prefs.getInt(_lastLocationUpdatedPrefKey);
+    if (lastLocationUpdatedMs != null) {
+      _lastLocationUpdatedAt = DateTime.fromMillisecondsSinceEpoch(
+        lastLocationUpdatedMs,
+      );
+    }
+    await _loadLocalTimeZone();
     // 1. Calculate Dynamic Quran Goal
     int rounds = _prefs.getInt('quran_rounds_goal') ?? 1;
     _lastRoundsGoal = rounds;
@@ -114,12 +126,14 @@ class HomeScreenState extends State<HomeScreen> {
 
     if (_prefs.getString('last_reset_date') != today) {
       for (var item in _checklist) {
-        await _prefs.setBool('task_${item.title}', false);
+        final storageKey = _checklistStorageKey(item.id, _quranPagesPerPrayer);
+        await _prefs.setBool('task_$storageKey', false);
       }
       await _prefs.setString('last_reset_date', today);
     } else {
       for (var item in _checklist) {
-        item.checked = _prefs.getBool('task_${item.title}') ?? false;
+        final storageKey = _checklistStorageKey(item.id, _quranPagesPerPrayer);
+        item.checked = _prefs.getBool('task_$storageKey') ?? false;
       }
     }
     await _loadDailyAyah();
@@ -127,10 +141,74 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() => _prefsReady = true);
   }
 
+  Future<void> _showLanguageSheet() async {
+    final controller = AppLanguageScope.of(context);
+    final strings = AppStrings.of(context);
+
+    final selected = await showModalBottomSheet<AppLanguage>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: Text(strings.english()),
+                trailing: controller.language == AppLanguage.english
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.pop(context, AppLanguage.english),
+              ),
+              ListTile(
+                title: Text(strings.amharic()),
+                trailing: controller.language == AppLanguage.amharic
+                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.pop(context, AppLanguage.amharic),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (selected != null) {
+      await controller.setLanguage(selected);
+    }
+  }
+
+  Future<void> _loadLocalTimeZone() async {
+    try {
+      final tz = await FlutterTimezone.getLocalTimezone();
+      if (!mounted) {
+        return;
+      }
+      setState(() => _localTimeZoneLabel = tz);
+    } catch (_) {
+      // Keep default label when timezone is unavailable.
+    }
+  }
+
   Future<void> _loadLocation() async {
+    if (_isRequestingLocation) {
+      return;
+    }
+
+    if (mounted) {
+      setState(() => _isRequestingLocation = true);
+    }
+
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (mounted) {
+          setState(() {
+            _isLocationServiceDisabled = true;
+            _isPermissionDeniedForever = false;
+            _locationStatus = _LocationStatus.serviceOff;
+          });
+        }
         return;
       }
 
@@ -140,31 +218,79 @@ class HomeScreenState extends State<HomeScreen> {
       }
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          setState(() {
+            _isLocationServiceDisabled = false;
+            _isPermissionDeniedForever =
+                permission == LocationPermission.deniedForever;
+            _locationStatus = _isPermissionDeniedForever
+                ? _LocationStatus.deniedForever
+                : _LocationStatus.denied;
+          });
+        }
         return;
       }
 
-      final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null) {
-        await _updateLocation(lastKnown);
+      Position current = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 20),
+        ),
+      );
+
+      if (current.accuracy > 100) {
+        current = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.best,
+            timeLimit: Duration(seconds: 20),
+          ),
+        );
       }
 
-      final current = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.low,
-      );
       await _updateLocation(current);
+      if (mounted) {
+        setState(() {
+          _isLocationServiceDisabled = false;
+          _isPermissionDeniedForever = false;
+          _locationStatus = _LocationStatus.ready;
+        });
+      }
     } catch (_) {
-      // Keep fallback coordinates when location is unavailable.
+      if (mounted) {
+        setState(() {
+          _locationStatus = _LocationStatus.unable;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRequestingLocation = false);
+      }
     }
   }
 
   Future<void> _updateLocation(Position position) async {
-    _lat = position.latitude;
-    _lng = position.longitude;
-    await _prefs.setDouble('user_lat', _lat);
-    await _prefs.setDouble('user_lng', _lng);
+    final lat = position.latitude;
+    final lng = position.longitude;
+    _lat = lat;
+    _lng = lng;
+    final updatedAt = DateTime.now();
+    _lastLocationUpdatedAt = updatedAt;
+    _locationStatus = _LocationStatus.ready;
+    await _prefs.setDouble('user_lat', lat);
+    await _prefs.setDouble('user_lng', lng);
+    await _prefs.setInt(
+      _lastLocationUpdatedPrefKey,
+      updatedAt.millisecondsSinceEpoch,
+    );
     if (mounted) {
       setState(() {});
     }
+  }
+
+  String _formatLocationUpdatedAt(DateTime value) {
+    final date = _formatDate(value);
+    final time = _formatTime(value);
+    return '$date $time';
   }
 
   Future<void> _loadDailyAyah() async {
@@ -235,7 +361,8 @@ class HomeScreenState extends State<HomeScreen> {
     _quranPagesPerPrayer = ((604 * rounds) / 30 / 5).ceil();
     _updateChecklistItems();
     for (var item in _checklist) {
-      item.checked = _prefs.getBool('task_${item.title}') ?? false;
+      final storageKey = _checklistStorageKey(item.id, _quranPagesPerPrayer);
+      item.checked = _prefs.getBool('task_$storageKey') ?? false;
     }
     setState(() {});
   }
@@ -243,26 +370,57 @@ class HomeScreenState extends State<HomeScreen> {
   void _updateChecklistItems() {
     _checklist.clear();
     _checklist.addAll([
-      _ChecklistEntry('Fajr + Read $_quranPagesPerPrayer Pages'),
-      _ChecklistEntry('Dhuhr + Read $_quranPagesPerPrayer Pages'),
-      _ChecklistEntry('Asr + Read $_quranPagesPerPrayer Pages'),
-      _ChecklistEntry('Maghrib + Read $_quranPagesPerPrayer Pages'),
-      _ChecklistEntry('Isha + Read $_quranPagesPerPrayer Pages'),
-      _ChecklistEntry('Taraweeh/Tahajjud'),
-      _ChecklistEntry('Morning/Evening Dhikr'),
+      _ChecklistEntry(id: 'fajr'),
+      _ChecklistEntry(id: 'dhuhr'),
+      _ChecklistEntry(id: 'asr'),
+      _ChecklistEntry(id: 'maghrib'),
+      _ChecklistEntry(id: 'isha'),
+      _ChecklistEntry(id: 'taraweeh'),
+      _ChecklistEntry(id: 'dhikr'),
     ]);
   }
 
-  // --- 1. DYNAMIC BACKGROUND LOGIC ---
-  List<Color> _getAdaptiveColors() {
-    final hour = DateTime.now().hour;
-    if (hour >= 3 && hour < 6)
-      return [Colors.indigo.shade900, Colors.deepPurple.shade700]; // Pre-Dawn
-    if (hour >= 6 && hour < 17)
-      return [const Color(0xFFFFFDE7), Colors.white]; // Mid-Day
-    if (hour >= 17 && hour < 19)
-      return [Colors.orange.shade300, Colors.deepOrange.shade100]; // Sunset
-    return [const Color(0xFF0F2027), const Color(0xFF203A43)]; // Night
+  String _checklistStorageKey(String id, int pagesPerPrayer) {
+    final english = AppStrings.forLanguage(AppLanguage.english);
+    switch (id) {
+      case 'fajr':
+        return english.checklistFajr(pagesPerPrayer);
+      case 'dhuhr':
+        return english.checklistDhuhr(pagesPerPrayer);
+      case 'asr':
+        return english.checklistAsr(pagesPerPrayer);
+      case 'maghrib':
+        return english.checklistMaghrib(pagesPerPrayer);
+      case 'isha':
+        return english.checklistIsha(pagesPerPrayer);
+      case 'taraweeh':
+        return english.checklistTaraweeh();
+      case 'dhikr':
+        return english.checklistDhikr();
+      default:
+        return id;
+    }
+  }
+
+  String _checklistLabel(String id, AppStrings strings, int pagesPerPrayer) {
+    switch (id) {
+      case 'fajr':
+        return strings.checklistFajr(pagesPerPrayer);
+      case 'dhuhr':
+        return strings.checklistDhuhr(pagesPerPrayer);
+      case 'asr':
+        return strings.checklistAsr(pagesPerPrayer);
+      case 'maghrib':
+        return strings.checklistMaghrib(pagesPerPrayer);
+      case 'isha':
+        return strings.checklistIsha(pagesPerPrayer);
+      case 'taraweeh':
+        return strings.checklistTaraweeh();
+      case 'dhikr':
+        return strings.checklistDhikr();
+      default:
+        return id;
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -279,8 +437,11 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   // --- 2. ADHAN OFFLINE CALCULATION ---
-  PrayerTimes _getPrayerTimes() {
-    final myCoordinates = Coordinates(_lat, _lng);
+  PrayerTimes? _getPrayerTimes() {
+    if (_lat == null || _lng == null) {
+      return null;
+    }
+    final myCoordinates = Coordinates(_lat!, _lng!);
     final params = CalculationMethod.muslim_world_league.getParameters();
     params.madhab = Madhab.shafi;
     return PrayerTimes.today(myCoordinates, params);
@@ -288,13 +449,23 @@ class HomeScreenState extends State<HomeScreen> {
 
   // --- 3. TIMING & NEXT PRAYER LOGIC ---
   Widget _buildTimingSection(ThemeData theme) {
+    final strings = AppStrings.of(context);
     final times = _getPrayerTimes();
-    final now = DateTime.now();
-    bool isFasting = now.isAfter(times.fajr) && now.isBefore(times.maghrib);
+    if (times == null) {
+      return _buildLocationRequiredCard(theme);
+    }
+
+    final now = DateTime.now().toLocal();
+    final fajr = times.fajr.toLocal();
+    final dhuhr = times.dhuhr.toLocal();
+    final asr = times.asr.toLocal();
+    final maghrib = times.maghrib.toLocal();
+    final isha = times.isha.toLocal();
+
+    bool isFasting = now.isAfter(fajr) && now.isBefore(maghrib);
     final nextPrayer = times.nextPrayer();
-    final nextTime = times.timeForPrayer(nextPrayer);
-    final String nextName =
-        nextPrayer.name[0].toUpperCase() + nextPrayer.name.substring(1);
+    final nextTime = times.timeForPrayer(nextPrayer)?.toLocal();
+    final String nextName = _localizePrayerName(nextPrayer.name, strings);
     final diff = nextTime?.difference(now) ?? const Duration(hours: 0);
 
     return Container(
@@ -319,44 +490,200 @@ class HomeScreenState extends State<HomeScreen> {
                 size: 40,
               ),
               const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${diff.inHours}h ${diff.inMinutes % 60}m",
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "${diff.inHours}h ${diff.inMinutes % 60}m",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text("until $nextName", style: theme.textTheme.bodyMedium),
-                ],
+                    Text(
+                      strings.untilPrayer(nextName),
+                      style: theme.textTheme.bodyMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      _localTimeZoneLabel.isEmpty
+                          ? strings.localTime()
+                          : _localTimeZoneLabel,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
               const Spacer(),
               if (isFasting)
-                const Chip(
+                Chip(
                   label: Text(
-                    "FASTING",
-                    style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                    strings.fasting(),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
             ],
           ),
           const Divider(height: 30),
-          _buildPrayerTimeline(times, now),
+          _buildPrayerTimeline(
+            fajr: fajr,
+            dhuhr: dhuhr,
+            asr: asr,
+            maghrib: maghrib,
+            isha: isha,
+            now: now,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPrayerTimeline(PrayerTimes times, DateTime now) {
+  Widget _buildLocationRequiredCard(ThemeData theme) {
+    final strings = AppStrings.of(context);
+    final showOpenSettings = _isPermissionDeniedForever;
+    final showOpenLocation = _isLocationServiceDisabled;
+    final statusMessage = _locationStatusMessage(strings);
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.my_location, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  strings.locationRequiredTitle(),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            statusMessage,
+            style: theme.textTheme.bodyMedium,
+          ),
+          if (_lastLocationUpdatedAt != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              strings.lastLocationUpdated(
+                _formatLocationUpdatedAt(_lastLocationUpdatedAt!),
+              ),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton.icon(
+                onPressed: _isRequestingLocation ? null : _loadLocation,
+                icon: const Icon(Icons.refresh),
+                label: Text(
+                  _isRequestingLocation
+                      ? strings.t('checking')
+                      : strings.retry(),
+                ),
+              ),
+              if (showOpenLocation)
+                OutlinedButton.icon(
+                  onPressed: Geolocator.openLocationSettings,
+                  icon: const Icon(Icons.location_searching),
+                  label: Text(strings.locationSettings()),
+                ),
+              if (showOpenSettings)
+                OutlinedButton.icon(
+                  onPressed: Geolocator.openAppSettings,
+                  icon: const Icon(Icons.settings),
+                  label: Text(strings.appSettings()),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _locationStatusMessage(AppStrings strings) {
+    switch (_locationStatus) {
+      case _LocationStatus.serviceOff:
+        return strings.locationServiceOffMessage();
+      case _LocationStatus.denied:
+        return strings.locationDeniedMessage();
+      case _LocationStatus.deniedForever:
+        return strings.locationDeniedForeverMessage();
+      case _LocationStatus.unable:
+        return strings.locationUnableMessage();
+      case _LocationStatus.ready:
+      case _LocationStatus.required:
+        return strings.locationRequiredMessage();
+    }
+  }
+
+  String _localizePrayerName(String name, AppStrings strings) {
+    switch (name.toLowerCase()) {
+      case 'fajr':
+        return strings.t('prayer_fajr');
+      case 'dhuhr':
+        return strings.t('prayer_dhuhr');
+      case 'asr':
+        return strings.t('prayer_asr');
+      case 'maghrib':
+        return strings.t('prayer_maghrib');
+      case 'isha':
+        return strings.t('prayer_isha');
+      default:
+        return name;
+    }
+  }
+
+  Widget _buildPrayerTimeline({
+    required DateTime fajr,
+    required DateTime dhuhr,
+    required DateTime asr,
+    required DateTime maghrib,
+    required DateTime isha,
+    required DateTime now,
+  }) {
+    final strings = AppStrings.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _miniPrayerItem("Fajr", times.fajr, now),
-        _miniPrayerItem("Dhuhr", times.dhuhr, now),
-        _miniPrayerItem("Asr", times.asr, now),
-        _miniPrayerItem("Maghrib", times.maghrib, now),
-        _miniPrayerItem("Isha", times.isha, now),
+        _miniPrayerItem(strings.t('prayer_fajr'), fajr, now),
+        _miniPrayerItem(strings.t('prayer_dhuhr'), dhuhr, now),
+        _miniPrayerItem(strings.t('prayer_asr'), asr, now),
+        _miniPrayerItem(strings.t('prayer_maghrib'), maghrib, now),
+        _miniPrayerItem(strings.t('prayer_isha'), isha, now),
       ],
     );
   }
@@ -391,6 +718,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final strings = AppStrings.of(context);
     final hijri = HijriCalendar.fromDate(DateTime.now());
     final hijriDay = hijri.hDay;
     final hijriMonth = hijri.hMonth;
@@ -401,12 +729,17 @@ class HomeScreenState extends State<HomeScreen> {
     final inspirationIndex = hijriDay;
     final dailyAyah = _dailyAyah;
     final inspirationItems = <DailyText>[
-      dailyAyah ??
-          const DailyText(
-            title: 'Ayah of the Day',
-            text: 'Loading today\'s ayah...',
-            source: '',
-          ),
+      dailyAyah == null
+          ? DailyText(
+              title: strings.t('ayah_of_day'),
+              text: strings.t('ayah_loading'),
+              source: '',
+            )
+          : DailyText(
+              title: strings.t('ayah_of_day'),
+              text: dailyAyah.text,
+              source: dailyAyah.source,
+            ),
       duas[inspirationIndex % duas.length],
       hadith[inspirationIndex % hadith.length],
     ];
@@ -415,7 +748,9 @@ class HomeScreenState extends State<HomeScreen> {
 
     if (_prefsReady) {
       for (var item in _checklist) {
-        item.checked = _prefs.getBool('task_${item.title}') ?? false;
+        final storageKey =
+            _checklistStorageKey(item.id, _quranPagesPerPrayer);
+        item.checked = _prefs.getBool('task_$storageKey') ?? false;
       }
     }
 
@@ -426,14 +761,21 @@ class HomeScreenState extends State<HomeScreen> {
           SafeArea(
             child: CustomScrollView(
               slivers: [
-                const SliverAppBar(
+                SliverAppBar(
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                   title: Text(
-                    "Baraka30",
+                    strings.appTitle(),
                     style: TextStyle(fontWeight: FontWeight.w900, fontSize: 22),
                   ),
                   centerTitle: false,
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.language),
+                      tooltip: strings.languageLabel(),
+                      onPressed: _showLanguageSheet,
+                    ),
+                  ],
                 ),
                 SliverToBoxAdapter(
                   child: Padding(
@@ -446,8 +788,12 @@ class HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             isRamadan
-                                ? "Ramadan Day $hijriDay"
-                                : "$monthName $hijriDay, $hijriYear AH",
+                                ? strings.ramadanDay(hijriDay)
+                                : strings.hijriDate(
+                                    monthName,
+                                    hijriDay,
+                                    hijriYear,
+                                  ),
                             style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -462,9 +808,9 @@ class HomeScreenState extends State<HomeScreen> {
                                 color: Colors.amber,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Text(
-                                "LAST 10 NIGHTS",
-                                style: TextStyle(
+                              child: Text(
+                                strings.lastTenNights(),
+                                style: const TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -480,7 +826,7 @@ class HomeScreenState extends State<HomeScreen> {
                       _buildNiyyahCard(theme),
                       const SizedBox(height: 24),
                       Text(
-                        "Today's Inspiration",
+                        strings.todaysInspiration(),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -518,7 +864,7 @@ class HomeScreenState extends State<HomeScreen> {
                       _buildInspirationDots(theme, inspirationItems.length),
                       const SizedBox(height: 24),
                       Text(
-                        "Daily Checklist",
+                        strings.dailyChecklist(),
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -526,20 +872,31 @@ class HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 12),
                       if (_prefsReady)
                         ..._checklist.map(
-                          (item) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8.0),
-                            child: ChecklistItem(
-                              title: item.title,
-                              checked: item.checked,
-                              onChanged: (val) {
-                                setState(() => item.checked = val ?? false);
-                                _prefs.setBool(
-                                  'task_${item.title}',
-                                  item.checked,
-                                );
-                              },
-                            ),
-                          ),
+                          (item) {
+                            final storageKey = _checklistStorageKey(
+                              item.id,
+                              _quranPagesPerPrayer,
+                            );
+                            final label = _checklistLabel(
+                              item.id,
+                              strings,
+                              _quranPagesPerPrayer,
+                            );
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: ChecklistItem(
+                                title: label,
+                                checked: item.checked,
+                                onChanged: (val) {
+                                  setState(() => item.checked = val ?? false);
+                                  _prefs.setBool(
+                                    'task_$storageKey',
+                                    item.checked,
+                                  );
+                                },
+                              ),
+                            );
+                          },
                         ),
                       _buildSunnahTip(),
                       const SizedBox(height: 40),
@@ -556,6 +913,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSunnahTip() {
+    final strings = AppStrings.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -572,8 +930,8 @@ class HomeScreenState extends State<HomeScreen> {
           Expanded(
             child: Text(
               DateTime.now().hour > 16
-                  ? "Sunnah: Break your fast with dates and water."
-                  : "Sunnah: Use Miswak to keep your breath fresh while fasting.",
+                  ? strings.sunnahTipEvening()
+                  : strings.sunnahTipMorning(),
               style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
             ),
           ),
@@ -583,6 +941,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildNiyyahCard(ThemeData theme) {
+    final strings = AppStrings.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -594,16 +953,16 @@ class HomeScreenState extends State<HomeScreen> {
           end: Alignment.bottomRight,
         ),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: Colors.white70, size: 16),
-              SizedBox(width: 8),
+              const Icon(Icons.auto_awesome, color: Colors.white70, size: 16),
+              const SizedBox(width: 8),
               Text(
-                "DAILY NIYYAH",
-                style: TextStyle(
+                strings.dailyNiyyah(),
+                style: const TextStyle(
                   color: Colors.white70,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.5,
@@ -611,10 +970,10 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
-            "“I intend to fast this day of Ramadan for the sake of Allah.”",
-            style: TextStyle(
+            strings.niyyahText(),
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontStyle: FontStyle.italic,
@@ -632,6 +991,7 @@ class HomeScreenState extends State<HomeScreen> {
     String monthName,
     int hijriDay,
   ) {
+    final strings = AppStrings.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -657,7 +1017,7 @@ class HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Assalamu Alaikum',
+            strings.assalamuAlaikum(),
             style: theme.textTheme.titleMedium?.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
@@ -667,8 +1027,8 @@ class HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           Text(
             isRamadan
-                ? 'Stay steady on Day $hijriDay of Ramadan'
-                : 'Keep your Quran rhythm in $monthName',
+                ? strings.heroRamadanMessage(hijriDay)
+                : strings.heroMonthMessage(monthName),
             style: theme.textTheme.bodyMedium?.copyWith(
               color: Colors.white70,
             ),
@@ -676,11 +1036,11 @@ class HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              _buildHeroChip('Read', Icons.menu_book),
+              _buildHeroChip(strings.heroRead(), Icons.menu_book),
               const SizedBox(width: 8),
-              _buildHeroChip('Dhikr', Icons.fingerprint),
+              _buildHeroChip(strings.heroDhikr(), Icons.fingerprint),
               const SizedBox(width: 8),
-              _buildHeroChip('Dua', Icons.auto_awesome),
+              _buildHeroChip(strings.heroDua(), Icons.auto_awesome),
             ],
           ),
         ],
@@ -831,8 +1191,18 @@ class _DotPatternPainter extends CustomPainter {
   }
 }
 
+enum _LocationStatus {
+  required,
+  serviceOff,
+  denied,
+  deniedForever,
+  unable,
+  ready,
+}
+
 class _ChecklistEntry {
-  final String title;
+  _ChecklistEntry({required this.id});
+
+  final String id;
   bool checked = false;
-  _ChecklistEntry(this.title);
 }
