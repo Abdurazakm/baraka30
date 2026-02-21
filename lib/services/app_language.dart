@@ -56,8 +56,8 @@ class AppLanguageScope extends InheritedNotifier<AppLanguageController> {
   }) : super(notifier: controller, child: child);
 
   static AppLanguageController of(BuildContext context) {
-    final scope =
-        context.dependOnInheritedWidgetOfExactType<AppLanguageScope>();
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<AppLanguageScope>();
     if (scope == null || scope.notifier == null) {
       throw StateError('AppLanguageScope is missing from the widget tree.');
     }
@@ -103,12 +103,11 @@ class AppStrings {
   String yes() => t('yes');
   String no() => t('no');
 
-  String ramadanDay(int day) =>
-      t('ramadan_day', vars: {'day': day.toString()});
+  String ramadanDay(int day) => t('ramadan_day', vars: {'day': day.toString()});
   String hijriDate(String month, int day, int year) => t(
-        'hijri_date',
-        vars: {'month': month, 'day': day.toString(), 'year': year.toString()},
-      );
+    'hijri_date',
+    vars: {'month': month, 'day': day.toString(), 'year': year.toString()},
+  );
   String lastTenNights() => t('last_ten_nights');
   String assalamuAlaikum() => t('assalamu_alaikum');
   String heroRamadanMessage(int day) =>
@@ -163,17 +162,17 @@ class AppStrings {
   String goalSetMessage(int value) =>
       t('goal_set_message', vars: {'value': value.toString()});
   String readDailyProgress(int read, String target) => t(
-        'read_daily_progress',
-        vars: {'read': read.toString(), 'target': target},
-      );
+    'read_daily_progress',
+    vars: {'read': read.toString(), 'target': target},
+  );
   String readMonthlyProgress(int read, String target) => t(
-        'read_monthly_progress',
-        vars: {'read': read.toString(), 'target': target},
-      );
+    'read_monthly_progress',
+    vars: {'read': read.toString(), 'target': target},
+  );
   String roundLabel(int value) => t(
-        'round_label',
-        vars: {'value': value.toString(), 'plural': value > 1 ? 's' : ''},
-      );
+    'round_label',
+    vars: {'value': value.toString(), 'plural': value > 1 ? 's' : ''},
+  );
   String totalPagesLabel() => t('total_pages');
   String dailyGoalLabel() => t('daily_goal');
   String pagesLabel() => t('pages');
@@ -199,9 +198,9 @@ class AppStrings {
   String selectAtLeastOne() => t('select_at_least_one');
   String startingDownloads() => t('starting_downloads');
   String downloadingTranslation(String key, int surah) => t(
-        'downloading_translation',
-        vars: {'key': key, 'surah': surah.toString()},
-      );
+    'downloading_translation',
+    vars: {'key': key, 'surah': surah.toString()},
+  );
   String downloadingAudio(int surah) =>
       t('downloading_audio', vars: {'surah': surah.toString()});
   String downloadsComplete() => t('downloads_complete');
@@ -278,21 +277,28 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'todays_inspiration': "Today's Inspiration",
     'daily_checklist': 'Daily Checklist',
     'daily_niyyah': 'DAILY NIYYAH',
-    'niyyah_text': '“I intend to fast this day of Ramadan for the sake of Allah.”',
+    'niyyah_text':
+        '“I intend to fast this day of Ramadan for the sake of Allah.”',
     'fasting': 'FASTING',
     'until_prayer': 'until {prayer}',
     'local_time': 'Local Time',
     'location_required_title': 'Accurate Prayer Times Need Location',
-    'location_required_message': 'Location is required for accurate prayer times.',
-    'location_service_off_message': 'Enable location services to calculate prayer times accurately.',
-    'location_denied_message': 'Location permission is required for accurate prayer times.',
-    'location_denied_forever_message': 'Location permission is permanently denied. Open settings to allow it for accurate prayer times.',
-    'location_unable_message': 'Unable to get accurate location right now. Please retry.',
+    'location_required_message':
+        'Location is required for accurate prayer times.',
+    'location_service_off_message':
+        'Enable location services to calculate prayer times accurately.',
+    'location_denied_message':
+        'Location permission is required for accurate prayer times.',
+    'location_denied_forever_message':
+        'Location permission is permanently denied. Open settings to allow it for accurate prayer times.',
+    'location_unable_message':
+        'Unable to get accurate location right now. Please retry.',
     'last_location_updated': 'Last updated location: {time}',
     'retry': 'Retry',
     'location_settings': 'Location Settings',
     'app_settings': 'App Settings',
-    'sunnah_tip_morning': 'Sunnah: Use Miswak to keep your breath fresh while fasting.',
+    'sunnah_tip_morning':
+        'Sunnah: Use Miswak to keep your breath fresh while fasting.',
     'sunnah_tip_evening': 'Sunnah: Break your fast with dates and water.',
     'checklist_fajr': 'Fajr + Read {pages} Pages',
     'checklist_dhuhr': 'Dhuhr + Read {pages} Pages',
@@ -309,7 +315,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'daily_quran_target': 'Daily Quran Target',
     'monthly_quran_target': 'Monthly Quran Target',
     'goal_set_message': 'Goal set to {value} Round{s}!',
-    'read_daily_progress': 'Read {read} / {target} pages in Quran to fill this bar.',
+    'read_daily_progress':
+        'Read {read} / {target} pages in Quran to fill this bar.',
     'read_monthly_progress': 'Read {read} / {target} pages this month.',
     'round_label': '{value} Round{s} (Khatam)',
     'total_pages': 'Total Pages',
@@ -333,7 +340,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'offline_not_supported_web': 'Offline downloads are not supported on web.',
     'select_at_least_one': 'Select at least one surah or juz.',
     'starting_downloads': 'Starting downloads...',
-    'downloading_translation': 'Downloading translation {key} (Surah {surah})...',
+    'downloading_translation':
+        'Downloading translation {key} (Surah {surah})...',
     'downloading_audio': 'Downloading audio (Surah {surah})...',
     'downloads_complete': 'Downloads complete.',
     'download_failed': 'Download failed: {error}',
@@ -341,7 +349,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'download_audio': 'Download audio',
     'start_download': 'Start Download',
     'all_surahs_downloaded': 'All surahs will be downloaded.',
-    'offline_not_available_web': 'Offline downloads are not available on Web. Use mobile or desktop builds for offline storage.',
+    'offline_not_available_web':
+        'Offline downloads are not available on Web. Use mobile or desktop builds for offline storage.',
     'page_label': 'Page {page}',
     'go_to_page': 'Go to Page',
     'go_to_page_title': 'Go to Page',
@@ -363,13 +372,16 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'play_continuously': 'Play Continuously from Here',
     'stop_continuous': 'Stop Continuous Play',
     'keep_playing_subtitle': 'Keeps playing next verses automatically',
-    'playing_verse': 'Playing verse audio... (long-press and choose Stop Audio)',
-    'continuous_playback_active': 'Continuous playback active... (long-press and choose Stop Continuous Play)',
+    'playing_verse':
+        'Playing verse audio... (long-press and choose Stop Audio)',
+    'continuous_playback_active':
+        'Continuous playback active... (long-press and choose Stop Continuous Play)',
     'continuous_playback_finished': 'Continuous playback finished.',
     'could_not_play_verse': 'Could not play this verse audio.',
     'could_not_start_continuous': 'Could not start continuous audio.',
     'could_not_continue': 'Could not continue playback.',
-    'tip_tap_verse': 'Tip: Tap verse to play • Long-press ayah marker for options',
+    'tip_tap_verse':
+        'Tip: Tap verse to play • Long-press ayah marker for options',
     'prayer_fajr': 'Fajr',
     'prayer_dhuhr': 'Dhuhr',
     'prayer_asr': 'Asr',
@@ -412,7 +424,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'location_required_message': 'ትክክለኛ የሶላት ጊዜ ለማስረጃ አካባቢ ያስፈልጋል።',
     'location_service_off_message': 'ትክክለኛ የሶላት ጊዜ ለማስረጃ የአካባቢ አገልግሎት አብራሩ።',
     'location_denied_message': 'ትክክለኛ የሶላት ጊዜ ለማስረጃ የአካባቢ ፍቃድ ያስፈልጋል።',
-    'location_denied_forever_message': 'የአካባቢ ፍቃድ ለዘላቂ ተከልክሏል። ትክክለኛ የሶላት ጊዜ ለማግኘት ቅንብሮች ይክፈቱ።',
+    'location_denied_forever_message':
+        'የአካባቢ ፍቃድ ለዘላቂ ተከልክሏል። ትክክለኛ የሶላት ጊዜ ለማግኘት ቅንብሮች ይክፈቱ።',
     'location_unable_message': 'አሁን ትክክለኛ አካባቢ ማግኘት አልተቻለም። እባክዎ ደግመው ይሞክሩ።',
     'last_location_updated': 'የመጨረሻ የአካባቢ ዝመና: {time}',
     'retry': 'ደግመው ይሞክሩ',
@@ -467,7 +480,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'download_audio': 'ድምጽ አውርድ',
     'start_download': 'ማውረድ ጀምር',
     'all_surahs_downloaded': 'ሁሉም ሱራዎች ይወረዳሉ።',
-    'offline_not_available_web': 'በድር ላይ የመስመር ውጭ ማውረድ አይቻልም። ለመስመር ውጭ ማከማቻ የሞባይል ወይም ዴስክቶፕ ግንባታ ይጠቀሙ።',
+    'offline_not_available_web':
+        'በድር ላይ የመስመር ውጭ ማውረድ አይቻልም። ለመስመር ውጭ ማከማቻ የሞባይል ወይም ዴስክቶፕ ግንባታ ይጠቀሙ።',
     'page_label': 'ገጽ {page}',
     'go_to_page': 'ወደ ገጽ ሂድ',
     'go_to_page_title': 'ወደ ገጽ ሂድ',
@@ -490,7 +504,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'stop_continuous': 'ቀጥታ አቁም',
     'keep_playing_subtitle': 'ቀጣይ አያቶችን በራሱ ይቀጥላል',
     'playing_verse': 'የአያት ድምጽ በመጫወት ላይ... (ረዥም ጫን እና አቁም ምረጥ)',
-    'continuous_playback_active': 'ቀጥታ መቀጠል በመጫወት ላይ... (ረዥም ጫን እና ቀጥታ አቁም ምረጥ)',
+    'continuous_playback_active':
+        'ቀጥታ መቀጠል በመጫወት ላይ... (ረዥም ጫን እና ቀጥታ አቁም ምረጥ)',
     'continuous_playback_finished': 'ቀጥታ መጫወት ተጠናቀቀ።',
     'could_not_play_verse': 'የዚህ አያት ድምጽ ማጫወት አልተቻለም።',
     'could_not_start_continuous': 'ቀጥታ ድምጽ መጀመር አልተቻለም።',

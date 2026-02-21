@@ -300,7 +300,8 @@ class HomeScreenState extends State<HomeScreen> {
     int ayah = _prefs.getInt('daily_ayah_ayah') ?? 1;
 
     if (savedDate != today) {
-      final seed = int.tryParse(today.replaceAll('-', '')) ?? DateTime.now().day;
+      final seed =
+          int.tryParse(today.replaceAll('-', '')) ?? DateTime.now().day;
       final random = Random(seed);
       final surahs = Quran.getSurahAsList();
       final selectedSurah = surahs[random.nextInt(surahs.length)];
@@ -585,10 +586,7 @@ class HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            statusMessage,
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text(statusMessage, style: theme.textTheme.bodyMedium),
           if (_lastLocationUpdatedAt != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -714,7 +712,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -748,8 +745,7 @@ class HomeScreenState extends State<HomeScreen> {
 
     if (_prefsReady) {
       for (var item in _checklist) {
-        final storageKey =
-            _checklistStorageKey(item.id, _quranPagesPerPrayer);
+        final storageKey = _checklistStorageKey(item.id, _quranPagesPerPrayer);
         item.checked = _prefs.getBool('task_$storageKey') ?? false;
       }
     }
@@ -783,96 +779,107 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            isRamadan
-                                ? strings.ramadanDay(hijriDay)
-                                : strings.hijriDate(
-                                    monthName,
-                                    hijriDay,
-                                    hijriYear,
-                                  ),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              isRamadan
+                                  ? strings.ramadanDay(hijriDay)
+                                  : strings.hijriDate(
+                                      monthName,
+                                      hijriDay,
+                                      hijriYear,
+                                    ),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          if (isLastTen)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.amber,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                strings.lastTenNights(),
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
+                            if (isLastTen)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  strings.lastTenNights(),
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _buildHeroBanner(theme, isRamadan, monthName, hijriDay),
-                      const SizedBox(height: 20),
-                      _buildTimingSection(theme),
-                      const SizedBox(height: 20),
-                      _buildNiyyahCard(theme),
-                      const SizedBox(height: 24),
-                      Text(
-                        strings.todaysInspiration(),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      SizedBox(
-                        height: 220,
-                        child: PageView.builder(
-                          controller: _inspirationController,
-                          itemCount: inspirationItems.length,
-                          onPageChanged: (index) {
-                            setState(() => _inspirationPage = index);
-                          },
-                          itemBuilder: (context, index) {
-                            return AnimatedBuilder(
-                              animation: _inspirationController,
-                              child: SingleChildScrollView(
-                                physics: const BouncingScrollPhysics(),
-                                child: AyahCard(item: inspirationItems[index]),
-                              ),
-                              builder: (context, child) {
-                                double opacity = 1.0;
-                                if (_inspirationController.position.hasContentDimensions) {
-                                  final page = _inspirationController.page ?? _inspirationPage.toDouble();
-                                  final delta = (page - index).abs().clamp(0.0, 1.0);
-                                  opacity = 1 - delta;
-                                }
-                                return Opacity(opacity: opacity, child: child);
-                              },
-                            );
-                          },
+                        const SizedBox(height: 16),
+                        _buildHeroBanner(theme, isRamadan, monthName, hijriDay),
+                        const SizedBox(height: 20),
+                        _buildTimingSection(theme),
+                        const SizedBox(height: 20),
+                        _buildNiyyahCard(theme),
+                        const SizedBox(height: 24),
+                        Text(
+                          strings.todaysInspiration(),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildInspirationDots(theme, inspirationItems.length),
-                      const SizedBox(height: 24),
-                      Text(
-                        strings.dailyChecklist(),
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 220,
+                          child: PageView.builder(
+                            controller: _inspirationController,
+                            itemCount: inspirationItems.length,
+                            onPageChanged: (index) {
+                              setState(() => _inspirationPage = index);
+                            },
+                            itemBuilder: (context, index) {
+                              return AnimatedBuilder(
+                                animation: _inspirationController,
+                                child: SingleChildScrollView(
+                                  physics: const BouncingScrollPhysics(),
+                                  child: AyahCard(
+                                    item: inspirationItems[index],
+                                  ),
+                                ),
+                                builder: (context, child) {
+                                  double opacity = 1.0;
+                                  if (_inspirationController
+                                      .position
+                                      .hasContentDimensions) {
+                                    final page =
+                                        _inspirationController.page ??
+                                        _inspirationPage.toDouble();
+                                    final delta = (page - index).abs().clamp(
+                                      0.0,
+                                      1.0,
+                                    );
+                                    opacity = 1 - delta;
+                                  }
+                                  return Opacity(
+                                    opacity: opacity,
+                                    child: child,
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (_prefsReady)
-                        ..._checklist.map(
-                          (item) {
+                        const SizedBox(height: 10),
+                        _buildInspirationDots(theme, inspirationItems.length),
+                        const SizedBox(height: 24),
+                        Text(
+                          strings.dailyChecklist(),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_prefsReady)
+                          ..._checklist.map((item) {
                             final storageKey = _checklistStorageKey(
                               item.id,
                               _quranPagesPerPrayer,
@@ -896,10 +903,9 @@ class HomeScreenState extends State<HomeScreen> {
                                 },
                               ),
                             );
-                          },
-                        ),
-                      _buildSunnahTip(),
-                      const SizedBox(height: 40),
+                          }),
+                        _buildSunnahTip(),
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
@@ -1029,9 +1035,7 @@ class HomeScreenState extends State<HomeScreen> {
             isRamadan
                 ? strings.heroRamadanMessage(hijriDay)
                 : strings.heroMonthMessage(monthName),
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: Colors.white70,
-            ),
+            style: theme.textTheme.bodyMedium?.copyWith(color: Colors.white70),
           ),
           const SizedBox(height: 12),
           Row(
@@ -1130,9 +1134,7 @@ class HomeScreenState extends State<HomeScreen> {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [color, color.withValues(alpha: 0.0)],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0.0)]),
       ),
     );
   }

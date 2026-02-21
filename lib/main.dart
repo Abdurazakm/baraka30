@@ -9,17 +9,17 @@ import 'services/app_language.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Quran Database
   await Quran.initialize();
-  
+
   // Initialize Notification Service
   await NotificationService.instance.initialize();
   await NotificationService.instance.scheduleSuhoorIftarIfConfigured();
 
   final languageController = AppLanguageController();
   await languageController.load();
-  
+
   runApp(BarakaApp(languageController: languageController));
 }
 
@@ -59,51 +59,61 @@ class BarakaApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.system,
         theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: lightScheme,
-        // Fix: Use surface for background color
-        scaffoldBackgroundColor: lightScheme.surface,
-        fontFamily: 'Serif', 
-        
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          foregroundColor: lightScheme.primary,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontFamily: 'Serif',
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: lightScheme.tertiary,
-          ),
-        ),
+          useMaterial3: true,
+          colorScheme: lightScheme,
+          // Fix: Use surface for background color
+          scaffoldBackgroundColor: lightScheme.surface,
+          fontFamily: 'Serif',
 
-        // Fix: Changed CardTheme to CardThemeData
-        cardTheme: CardThemeData(
-          color: lightScheme.surface.withValues(alpha: 0.9), // Fix: used withValues
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: lightScheme.primary.withValues(alpha: 0.1)),
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            surfaceTintColor: Colors.transparent,
+            foregroundColor: lightScheme.primary,
+            centerTitle: false,
+            titleTextStyle: TextStyle(
+              fontFamily: 'Serif',
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: lightScheme.tertiary,
+            ),
           ),
-        ),
 
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: lightScheme.surface,
-          indicatorColor: lightScheme.primary.withValues(alpha: 0.12),
-          labelTextStyle: WidgetStateProperty.all(
-            TextStyle(color: lightScheme.primary, fontSize: 12, fontWeight: FontWeight.w600),
+          // Fix: Changed CardTheme to CardThemeData
+          cardTheme: CardThemeData(
+            color: lightScheme.surface.withValues(
+              alpha: 0.9,
+            ), // Fix: used withValues
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: lightScheme.primary.withValues(alpha: 0.1),
+              ),
+            ),
           ),
-          iconTheme: WidgetStateProperty.resolveWith((states) {
-            if (states.contains(WidgetState.selected)) {
-              return IconThemeData(color: lightScheme.primary, size: 28);
-            }
-            return IconThemeData(color: lightScheme.primary.withValues(alpha: 0.6));
-          }),
+
+          navigationBarTheme: NavigationBarThemeData(
+            backgroundColor: lightScheme.surface,
+            indicatorColor: lightScheme.primary.withValues(alpha: 0.12),
+            labelTextStyle: WidgetStateProperty.all(
+              TextStyle(
+                color: lightScheme.primary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            iconTheme: WidgetStateProperty.resolveWith((states) {
+              if (states.contains(WidgetState.selected)) {
+                return IconThemeData(color: lightScheme.primary, size: 28);
+              }
+              return IconThemeData(
+                color: lightScheme.primary.withValues(alpha: 0.6),
+              );
+            }),
+          ),
         ),
-      ),
         darkTheme: ThemeData(
           useMaterial3: true,
           colorScheme: darkScheme,
@@ -150,11 +160,8 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     return Scaffold(
-      extendBody: true, 
-      body: IndexedStack(
-        index: _index,
-        children: _screens,
-      ),
+      extendBody: true,
+      body: IndexedStack(index: _index, children: _screens),
       bottomNavigationBar: NavigationBar(
         elevation: 8,
         selectedIndex: _index,
@@ -165,7 +172,7 @@ class _AppShellState extends State<AppShell> {
         },
         destinations: [
           NavigationDestination(
-            icon: const Icon(Icons.home_outlined), 
+            icon: const Icon(Icons.home_outlined),
             selectedIcon: const Icon(Icons.home_rounded),
             label: strings.navHome(),
           ),

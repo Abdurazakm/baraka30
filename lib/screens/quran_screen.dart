@@ -69,8 +69,7 @@ class _QuranScreenState extends State<QuranScreen> {
     _currentPage = _prefs.getInt('quran_current_page') ?? 1;
     _bookmarkedPage = _prefs.getInt('quran_bookmark') ?? -1;
     _showTranslation = _prefs.getBool('show_translation') ?? true;
-    _preferContinuousPlayback =
-      _prefs.getBool(_continuousPlayPrefKey) ?? false;
+    _preferContinuousPlayback = _prefs.getBool(_continuousPlayPrefKey) ?? false;
     _showAudioHint = !(_prefs.getBool(_audioHintSeenPrefKey) ?? false);
     _selectedTranslationLanguage = _getSavedTranslationLanguage();
     _loadHighlightedVerses();
@@ -426,10 +425,7 @@ class _QuranScreenState extends State<QuranScreen> {
         setState(() => _isContinuousPlaybackActive = false);
       }
 
-      await _playVerseAudio(
-        surahNumber: surahNumber,
-        verseNumber: verseNumber,
-      );
+      await _playVerseAudio(surahNumber: surahNumber, verseNumber: verseNumber);
     } catch (_) {
       if (!mounted) {
         return;
