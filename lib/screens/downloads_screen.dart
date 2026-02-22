@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:quran_flutter/quran_flutter.dart';
 
 import '../services/offline_quran_service.dart';
+import '../services/app_language.dart';
 
 enum DownloadScope { surah, juz, all }
 
@@ -107,11 +108,11 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       return;
     }
 
+    final strings = AppStrings.of(context);
+
     if (_isWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Offline downloads are not supported on web.'),
-        ),
+        SnackBar(content: Text(strings.offlineNotSupportedWeb())),
       );
       return;
     }
@@ -119,7 +120,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     final surahs = _getSelectedSurahs();
     if (surahs.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one surah or juz.')),
+        SnackBar(content: Text(strings.selectAtLeastOne())),
       );
       return;
     }
@@ -130,7 +131,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
     setState(() {
       _isBusy = true;
-      _status = 'Starting downloads...';
+      _status = strings.startingDownloads();
       _progress = 0;
     });
 
@@ -149,7 +150,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         for (final key in translations) {
           for (final surah in surahs) {
             setState(
-              () => _status = 'Downloading translation $key (Surah $surah)...',
+              () => _status = strings.downloadingTranslation(key, surah),
             );
             await _service.downloadTranslationSurah(key: key, surah: surah);
             completedSteps++;
@@ -163,7 +164,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           final verseCount = _surahList
               .firstWhere((s) => s.number == surah)
               .verseCount;
-          setState(() => _status = 'Downloading audio (Surah $surah)...');
+          setState(() => _status = strings.downloadingAudio(surah));
           await _service.downloadAudioSurah(
             reciterKey: _activeReciterKey,
             surah: surah,
@@ -183,7 +184,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Downloads complete.')));
+      ).showSnackBar(SnackBar(content: Text(strings.downloadsComplete())));
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) {
@@ -191,7 +192,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       }
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Download failed: $error')));
+      ).showSnackBar(SnackBar(content: Text(strings.downloadFailed('$error'))));
     } finally {
       if (mounted) {
         setState(() {
@@ -203,19 +204,29 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   }
 
   Widget _buildScopeSelector() {
+    final strings = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Download Scope',
+        Text(
+          strings.downloadScope(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         SegmentedButton<DownloadScope>(
-          segments: const [
-            ButtonSegment(value: DownloadScope.surah, label: Text('Surah')),
-            ButtonSegment(value: DownloadScope.juz, label: Text('Juz')),
-            ButtonSegment(value: DownloadScope.all, label: Text('All')),
+          segments: [
+            ButtonSegment(
+              value: DownloadScope.surah,
+              label: Text(strings.scopeSurah()),
+            ),
+            ButtonSegment(
+              value: DownloadScope.juz,
+              label: Text(strings.scopeJuz()),
+            ),
+            ButtonSegment(
+              value: DownloadScope.all,
+              label: Text(strings.scopeAll()),
+            ),
           ],
           selected: {_scope},
           onSelectionChanged: (value) {
@@ -229,11 +240,12 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   }
 
   Widget _buildSurahList() {
+    final strings = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select Surahs',
+        Text(
+          strings.selectSurahs(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -267,10 +279,14 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   }
 
   Widget _buildJuzList() {
+    final strings = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select Juz', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          strings.selectJuz(),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         SizedBox(
           height: 200,
@@ -281,7 +297,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
               final selected = _selectedJuz.contains(juz);
               return CheckboxListTile(
                 value: selected,
-                title: Text('Juz $juz'),
+                title: Text(strings.juzLabel(juz)),
                 dense: true,
                 onChanged: (value) {
                   setState(() {
@@ -301,11 +317,12 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   }
 
   Widget _buildTranslationSelector() {
+    final strings = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Translations',
+        Text(
+          strings.translations(),
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
@@ -332,7 +349,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
           initialValue: _activeTranslationKey,
-          decoration: const InputDecoration(labelText: 'Default translation'),
+          decoration: InputDecoration(labelText: strings.defaultTranslation()),
           items: OfflineQuranService.translationOptions
               .map(
                 (option) => DropdownMenuItem(
@@ -350,7 +367,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Use downloaded translations'),
+          title: Text(strings.useDownloadedTranslations()),
           value: _useDownloadedTranslations,
           onChanged: (value) =>
               setState(() => _useDownloadedTranslations = value),
@@ -360,14 +377,15 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
   }
 
   Widget _buildReciterSelector() {
+    final strings = AppStrings.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Audio', style: TextStyle(fontWeight: FontWeight.w600)),
+        Text(strings.audio(), style: const TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _activeReciterKey,
-          decoration: const InputDecoration(labelText: 'Reciter'),
+          decoration: InputDecoration(labelText: strings.reciter()),
           items: OfflineQuranService.reciterOptions
               .map(
                 (option) => DropdownMenuItem(
@@ -385,7 +403,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
-          title: const Text('Use downloaded audio when available'),
+          title: Text(strings.useDownloadedAudio()),
           value: _useDownloadedAudio,
           onChanged: (value) => setState(() => _useDownloadedAudio = value),
         ),
@@ -395,8 +413,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Offline Downloads')),
+      appBar: AppBar(title: Text(strings.offlineDownloads())),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -404,12 +423,9 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             if (_isWeb)
               Card(
                 color: Colors.orange.withValues(alpha: 0.1),
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text(
-                    'Offline downloads are not available on Web. '
-                    'Use mobile or desktop builds for offline storage.',
-                  ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(strings.offlineNotAvailableWeb()),
                 ),
               ),
             _buildScopeSelector(),
@@ -417,14 +433,14 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             if (_scope == DownloadScope.surah) _buildSurahList(),
             if (_scope == DownloadScope.juz) _buildJuzList(),
             if (_scope == DownloadScope.all)
-              const Text(
-                'All surahs will be downloaded.',
+              Text(
+                strings.allSurahsDownloaded(),
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
             const SizedBox(height: 16),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Download translations'),
+              title: Text(strings.downloadTranslations()),
               value: _downloadTranslations,
               onChanged: _isWeb
                   ? null
@@ -432,7 +448,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             ),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Download audio'),
+              title: Text(strings.downloadAudio()),
               value: _downloadAudio,
               onChanged: _isWeb
                   ? null
@@ -446,7 +462,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             ElevatedButton.icon(
               onPressed: _isBusy || _isWeb ? null : _startDownload,
               icon: const Icon(Icons.download),
-              label: const Text('Start Download'),
+              label: Text(strings.startDownload()),
             ),
             if (_isBusy) ...[
               const SizedBox(height: 12),

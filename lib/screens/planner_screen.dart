@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/app_language.dart';
 import '../services/progress_reset_service.dart';
 
 class PlannerScreen extends StatefulWidget {
@@ -134,9 +135,10 @@ class _PlannerScreenState extends State<PlannerScreen> {
     if (!mounted) {
       return;
     }
+    final strings = AppStrings.of(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Goal set to $value Round${value > 1 ? 's' : ''}!"),
+        content: Text(strings.goalSetMessage(value)),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.green.shade800,
       ),
@@ -146,6 +148,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     final theme = Theme.of(context);
     int totalPages = _totalQuranPages * _rounds;
     double dailyPages = totalPages / 30;
@@ -156,7 +159,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Ramadan Planner")),
+      appBar: AppBar(title: Text(strings.ramadanPlanner())),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -164,68 +167,73 @@ class _PlannerScreenState extends State<PlannerScreen> {
           children: [
             // --- PROGRESS SECTION ---
             Text(
-              "Today's Progress",
+              strings.todaysProgress(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            _buildProgressBar(theme),
+            _buildProgressBar(theme, strings),
 
             const SizedBox(height: 20),
             Text(
-              "Monthly Progress",
+              strings.monthlyProgress(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            _buildMonthlyProgressBar(theme),
+            _buildMonthlyProgressBar(theme, strings),
 
             const SizedBox(height: 32),
 
             // --- GOAL SETTING ---
             Text(
-              "Quran Completion Goal",
+              strings.quranCompletionGoal(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
-            _buildGoalSelector(theme),
+            _buildGoalSelector(theme, strings),
 
             const SizedBox(height: 24),
-            _buildSummaryCard(theme, totalPages, dailyPages),
+            _buildSummaryCard(theme, strings, totalPages, dailyPages),
 
             const SizedBox(height: 32),
             Text(
-              "Daily Reading Schedule",
+              strings.dailyReadingSchedule(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 12),
             _buildPrayerRow(
-              "Fajr",
+              strings.prayerFajr(),
               perPrayer,
               Icons.wb_twilight,
               Colors.orange,
             ),
-            _buildPrayerRow("Dhuhr", perPrayer, Icons.wb_sunny, Colors.amber),
             _buildPrayerRow(
-              "Asr",
+              strings.prayerDhuhr(),
+              perPrayer,
+              Icons.wb_sunny,
+              Colors.amber,
+            ),
+            _buildPrayerRow(
+              strings.prayerAsr(),
               perPrayer,
               Icons.wb_sunny_outlined,
               Colors.orangeAccent,
             ),
             _buildPrayerRow(
-              "Maghrib",
+              strings.prayerMaghrib(),
               perPrayer,
               Icons.nights_stay,
               Colors.indigo,
             ),
             _buildPrayerRow(
-              "Isha",
+              strings.prayerIsha(),
               perPrayer,
               Icons.nightlight_round,
               Colors.deepPurple,
@@ -238,7 +246,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
-  Widget _buildProgressBar(ThemeData theme) {
+  Widget _buildProgressBar(ThemeData theme, AppStrings strings) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -251,8 +259,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Daily Quran Target",
+              Text(
+                strings.dailyQuranTarget(),
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
@@ -278,7 +286,10 @@ class _PlannerScreenState extends State<PlannerScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Read $_pagesReadToday / ${_dailyTargetPages.toStringAsFixed(1)} pages in Quran to fill this bar.",
+            strings.readDailyProgress(
+              _pagesReadToday,
+              _dailyTargetPages.toStringAsFixed(1),
+            ),
             style: const TextStyle(
               fontSize: 11,
               color: Colors.grey,
@@ -290,7 +301,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
-  Widget _buildMonthlyProgressBar(ThemeData theme) {
+  Widget _buildMonthlyProgressBar(ThemeData theme, AppStrings strings) {
     final progress = _monthlyTargetPages <= 0
         ? 0.0
         : (_pagesReadMonth / _monthlyTargetPages).clamp(0.0, 1.0);
@@ -306,8 +317,8 @@ class _PlannerScreenState extends State<PlannerScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                "Monthly Quran Target",
+              Text(
+                strings.monthlyQuranTarget(),
                 style: TextStyle(fontWeight: FontWeight.w600),
               ),
               Text(
@@ -333,7 +344,10 @@ class _PlannerScreenState extends State<PlannerScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            "Read $_pagesReadMonth / ${_monthlyTargetPages.toStringAsFixed(0)} pages this month.",
+            strings.readMonthlyProgress(
+              _pagesReadMonth,
+              _monthlyTargetPages.toStringAsFixed(0),
+            ),
             style: const TextStyle(
               fontSize: 11,
               color: Colors.grey,
@@ -345,7 +359,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
-  Widget _buildGoalSelector(ThemeData theme) {
+  Widget _buildGoalSelector(ThemeData theme, AppStrings strings) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
@@ -363,7 +377,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
               .map(
                 (val) => DropdownMenuItem(
                   value: val,
-                  child: Text("$val Round${val > 1 ? 's' : ''} (Khatam)"),
+                  child: Text(strings.roundLabel(val)),
                 ),
               )
               .toList(),
@@ -377,7 +391,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
     );
   }
 
-  Widget _buildSummaryCard(ThemeData theme, int total, double daily) {
+  Widget _buildSummaryCard(
+    ThemeData theme,
+    AppStrings strings,
+    int total,
+    double daily,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -389,9 +408,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _sumItem("Total Pages", "$total"),
+          _sumItem(strings.totalPagesLabel(), '$total'),
           Container(width: 1, height: 40, color: Colors.white24),
-          _sumItem("Daily Goal", daily.toStringAsFixed(1)),
+          _sumItem(strings.dailyGoalLabel(), daily.toStringAsFixed(1)),
         ],
       ),
     );
@@ -436,7 +455,7 @@ class _PlannerScreenState extends State<PlannerScreen> {
         ),
         title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
         trailing: Text(
-          "${pages.toStringAsFixed(1)} Pages",
+          '${pages.toStringAsFixed(1)} ${AppStrings.of(context).pagesLabel()}',
           style: TextStyle(
             color: Colors.green.shade700,
             fontWeight: FontWeight.bold,

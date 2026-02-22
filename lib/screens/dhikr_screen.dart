@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/app_language.dart';
 
 class DhikrScreen extends StatefulWidget {
   const DhikrScreen({super.key});
@@ -223,6 +224,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     final theme = Theme.of(context);
     final selected = _options.firstWhere(
       (item) => item.label == _selectedDhikr,
@@ -230,13 +232,15 @@ class _DhikrScreenState extends State<DhikrScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Tasbih"),
+        title: Text(strings.tasbih()),
         actions: [
           IconButton(
             icon: Icon(
               _vibrationEnabled ? Icons.vibration : Icons.vibration_outlined,
             ),
-            tooltip: _vibrationEnabled ? 'Vibration: On' : 'Vibration: Off',
+            tooltip: _vibrationEnabled
+                ? strings.vibrationOn()
+                : strings.vibrationOff(),
             onPressed: _toggleVibration,
           ),
           IconButton(
@@ -246,18 +250,18 @@ class _DhikrScreenState extends State<DhikrScreen> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text("Reset Counter?"),
+                  title: Text(strings.resetCounter()),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text("No"),
+                      child: Text(strings.no()),
                     ),
                     TextButton(
                       onPressed: () {
                         _resetCounter();
                         Navigator.pop(context);
                       },
-                      child: const Text("Yes"),
+                      child: Text(strings.yes()),
                     ),
                   ],
                 ),

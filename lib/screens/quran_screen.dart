@@ -5,6 +5,7 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quran_flutter/quran_flutter.dart';
 import 'package:flutter/gestures.dart';
+import '../services/app_language.dart';
 import '../services/offline_quran_service.dart';
 import '../services/progress_reset_service.dart';
 import 'downloads_screen.dart';
@@ -36,6 +37,7 @@ class _QuranScreenState extends State<QuranScreen> {
   String _progressDateKey = '';
   String _progressMonthKey = '';
   int _pagesReadMonth = 0;
+  int? _returnReadingPage;
   Timer? _refreshTimer;
   bool _isRefreshing = false;
 
@@ -78,7 +80,7 @@ class _QuranScreenState extends State<QuranScreen> {
     _surahList = Quran.getSurahAsList();
     _currentPage = _prefs.getInt('quran_current_page') ?? 1;
     _bookmarkedPage = _prefs.getInt('quran_bookmark') ?? -1;
-    _showTranslation = _prefs.getBool('show_translation') ?? true;
+    _showTranslation = _prefs.getBool('show_translation') ?? false;
     _preferContinuousPlayback = _prefs.getBool(_continuousPlayPrefKey) ?? false;
     _showAudioHint = !(_prefs.getBool(_audioHintSeenPrefKey) ?? false);
     _selectedTranslationLanguage = _getSavedTranslationLanguage();
@@ -253,7 +255,6 @@ class _QuranScreenState extends State<QuranScreen> {
     if (!storedPages.contains(pageKey)) {
       storedPages.add(pageKey);
       await _prefs.setStringList('quran_pages_read_today', storedPages);
-      await _syncChecklistWithPagesRead(storedPages.length);
       await _trackMonthlyPageRead(pageKey);
       if (mounted) {
         setState(() => _pagesReadToday = storedPages.length);
@@ -269,19 +270,6 @@ class _QuranScreenState extends State<QuranScreen> {
       await _prefs.setStringList('quran_pages_read_month', storedPages);
       if (mounted) {
         setState(() => _pagesReadMonth = storedPages.length);
-      }
-    }
-  }
-
-  Future<void> _syncChecklistWithPagesRead(int pagesRead) async {
-    final pagesPerPrayer = ((_rounds * 604) / 30 / 5).ceil();
-    final List<String> prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-
-    for (int i = 0; i < prayers.length; i++) {
-      final requiredPages = pagesPerPrayer * (i + 1);
-      if (pagesRead >= requiredPages) {
-        final taskTitle = '${prayers[i]} + Read $pagesPerPrayer Pages';
-        await _prefs.setBool('task_$taskTitle', true);
       }
     }
   }
@@ -442,9 +430,10 @@ class _QuranScreenState extends State<QuranScreen> {
       if (!mounted) {
         return;
       }
+      final strings = AppStrings.of(context);
       setState(() => _playingVerseKey = null);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not play this verse audio.')),
+        SnackBar(content: Text(strings.couldNotPlayVerse())),
       );
     } finally {
       if (mounted) {
@@ -499,12 +488,13 @@ class _QuranScreenState extends State<QuranScreen> {
       if (!mounted) {
         return;
       }
+      final strings = AppStrings.of(context);
       setState(() {
         _playingVerseKey = null;
         _isContinuousPlaybackActive = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not start continuous audio.')),
+        SnackBar(content: Text(strings.couldNotStartContinuous())),
       );
     } finally {
       if (mounted) {
@@ -634,12 +624,13 @@ class _QuranScreenState extends State<QuranScreen> {
 
     final nextVerse = _getNextVerse(currentKey);
     if (nextVerse == null) {
+      final strings = AppStrings.of(context);
       setState(() {
         _playingVerseKey = null;
         _isContinuousPlaybackActive = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Continuous playback finished.')),
+        SnackBar(content: Text(strings.continuousPlaybackFinished())),
       );
       return;
     }
@@ -653,12 +644,13 @@ class _QuranScreenState extends State<QuranScreen> {
       if (!mounted) {
         return;
       }
+      final strings = AppStrings.of(context);
       setState(() {
         _playingVerseKey = null;
         _isContinuousPlaybackActive = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not continue playback.')),
+        SnackBar(content: Text(strings.couldNotContinue())),
       );
     }
   }
@@ -796,6 +788,7 @@ class _QuranScreenState extends State<QuranScreen> {
     required int surahNumber,
     required int verseNumber,
   }) async {
+    final strings = AppStrings.of(context);
     final key = _verseKey(surahNumber, verseNumber);
     final isHighlighted = _highlightedVerses.contains(key);
     final isPlaying = _playingVerseKey == key;
@@ -818,7 +811,9 @@ class _QuranScreenState extends State<QuranScreen> {
                   isHighlighted ? Icons.highlight_off : Icons.highlight,
                 ),
                 title: Text(
-                  isHighlighted ? 'Remove Highlight' : 'Highlight Verse',
+                  isHighlighted
+                      ? strings.removeHighlight()
+                      : strings.highlightVerse(),
                 ),
                 onTap: () => Navigator.pop(context, 'highlight'),
               ),
@@ -828,7 +823,7 @@ class _QuranScreenState extends State<QuranScreen> {
                       ? Icons.stop_circle_outlined
                       : Icons.play_circle_fill,
                 ),
-                title: Text(isPlaying ? 'Stop Audio' : 'Play Audio'),
+                title: Text(isPlaying ? strings.stopAudio() : strings.playAudio()),
                 onTap: () => Navigator.pop(context, 'audio'),
               ),
               ListTile(
@@ -839,15 +834,15 @@ class _QuranScreenState extends State<QuranScreen> {
                 ),
                 title: Text(
                   isContinuousPlaying
-                      ? 'Stop Continuous Play'
-                      : 'Play Continuously from Here',
+                      ? strings.stopContinuous()
+                      : strings.playContinuously(),
                 ),
-                subtitle: const Text('Keeps playing next verses automatically'),
+                subtitle: Text(strings.keepPlayingSubtitle()),
                 onTap: () => Navigator.pop(context, 'continuous'),
               ),
               ListTile(
                 leading: const Icon(Icons.translate),
-                title: const Text('Show Translation'),
+                title: Text(strings.showTranslation()),
                 subtitle: Text(_selectedTranslationLanguage.value),
                 onTap: () => Navigator.pop(context, 'translation'),
               ),
@@ -903,6 +898,7 @@ class _QuranScreenState extends State<QuranScreen> {
     required int verseNumber,
     required String arabicText,
   }) async {
+    final strings = AppStrings.of(context);
     final key = _verseKey(surahNumber, verseNumber);
     final isHighlighted = _highlightedVerses.contains(key);
     final isPlaying = _playingVerseKey == key;
@@ -922,14 +918,16 @@ class _QuranScreenState extends State<QuranScreen> {
               children: [
                 _buildQuickAction(
                   icon: isHighlighted ? Icons.highlight_off : Icons.highlight,
-                  label: isHighlighted ? 'Unhighlight' : 'Highlight',
+                  label: isHighlighted
+                      ? strings.unhighlightShort()
+                      : strings.highlightShort(),
                   onTap: () => Navigator.pop(context, 'highlight'),
                 ),
                 _buildQuickAction(
                   icon: isPlaying
                       ? Icons.stop_circle_outlined
                       : Icons.play_circle_fill,
-                  label: isPlaying ? 'Stop Audio' : 'Play Audio',
+                  label: isPlaying ? strings.stopAudio() : strings.playAudio(),
                   onTap: () => Navigator.pop(context, 'audio'),
                 ),
                 _buildQuickAction(
@@ -937,13 +935,13 @@ class _QuranScreenState extends State<QuranScreen> {
                       ? Icons.repeat_one_on
                       : Icons.playlist_play,
                   label: isContinuousPlaying
-                      ? 'Stop Continuous'
-                      : 'Play Continuously',
+                      ? strings.stopContinuousShort()
+                      : strings.playContinuouslyShort(),
                   onTap: () => Navigator.pop(context, 'continuous'),
                 ),
                 _buildQuickAction(
                   icon: Icons.translate,
-                  label: 'Translation',
+                  label: strings.translationShort(),
                   onTap: () => Navigator.pop(context, 'translation'),
                 ),
               ],
@@ -1034,22 +1032,39 @@ class _QuranScreenState extends State<QuranScreen> {
   void _jumpToBookmark() {
     if (_bookmarkedPage <= 0) {
       if (mounted) {
+        final strings = AppStrings.of(context);
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('No bookmark saved yet.')));
+        ).showSnackBar(SnackBar(content: Text(strings.noBookmarkSaved())));
       }
       return;
     }
 
-    _jumpToPage(_bookmarkedPage);
+    _jumpToPage(_bookmarkedPage, captureReadingPage: true);
   }
 
-  void _jumpToPage(int pageNum) {
+  int _currentVisiblePage() {
+    if (!_pageController.hasClients) {
+      return _currentPage;
+    }
+    final index = _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
+    return _pageNumberForIndex(index);
+  }
+
+  void _jumpToPage(
+    int pageNum, {
+    bool captureReadingPage = false,
+  }) {
     if (!_pageController.hasClients) {
       return;
     }
 
-    final targetIndex = _pageIndexForNumber(pageNum);
+    final targetPage = pageNum.clamp(1, 604);
+    final previousPage = _currentVisiblePage();
+    if (captureReadingPage && previousPage != targetPage) {
+      _returnReadingPage = previousPage;
+    }
+    final targetIndex = _pageIndexForNumber(targetPage);
     final currentIndex = _pageController.page?.round() ?? targetIndex;
     final distance = (currentIndex - targetIndex).abs();
     final durationMs = (200 + (distance * 10)).clamp(200, 1200);
@@ -1062,6 +1077,22 @@ class _QuranScreenState extends State<QuranScreen> {
 
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
+    }
+
+  }
+
+  void _jumpToReadingPage() {
+    final page = _returnReadingPage;
+    if (page == null || page == _currentPage) {
+      return;
+    }
+    _jumpToPage(page, captureReadingPage: false);
+    if (mounted) {
+      setState(() {
+        _returnReadingPage = null;
+      });
+    } else {
+      _returnReadingPage = null;
     }
   }
 
@@ -1076,6 +1107,7 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Future<void> _showPageSearchDialog() async {
+    final strings = AppStrings.of(context);
     final selectedPage = await showDialog<int>(
       context: context,
       builder: (context) {
@@ -1085,21 +1117,21 @@ class _QuranScreenState extends State<QuranScreen> {
         return StatefulBuilder(
           builder: (context, setLocalState) {
             return AlertDialog(
-              title: const Text('Go to Page'),
+              title: Text(strings.goToPageTitle()),
               content: TextField(
                 controller: controller,
                 autofocus: true,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'Page number',
-                  hintText: '1 - 604',
+                  labelText: strings.pageNumberLabel(),
+                  hintText: strings.pageNumberHint(),
                   errorText: errorText,
                 ),
                 onSubmitted: (_) {
                   final page = int.tryParse(controller.text.trim());
                   if (page == null || page < 1 || page > 604) {
                     setLocalState(() {
-                      errorText = 'Enter a number from 1 to 604';
+                      errorText = strings.enterPageError();
                     });
                     return;
                   }
@@ -1111,20 +1143,20 @@ class _QuranScreenState extends State<QuranScreen> {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  child: const Text('Cancel'),
+                  child: Text(strings.cancel()),
                 ),
                 FilledButton(
                   onPressed: () {
                     final page = int.tryParse(controller.text.trim());
                     if (page == null || page < 1 || page > 604) {
                       setLocalState(() {
-                        errorText = 'Enter a number from 1 to 604';
+                        errorText = strings.enterPageError();
                       });
                       return;
                     }
                     Navigator.pop(context, page);
                   },
-                  child: const Text('Go'),
+                  child: Text(strings.goButton()),
                 ),
               ],
             );
@@ -1137,11 +1169,12 @@ class _QuranScreenState extends State<QuranScreen> {
       return;
     }
 
-    _jumpToPage(selectedPage);
+    _jumpToPage(selectedPage, captureReadingPage: true);
   }
 
   @override
   Widget build(BuildContext context) {
+    final strings = AppStrings.of(context);
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -1154,12 +1187,12 @@ class _QuranScreenState extends State<QuranScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.manage_search),
-              tooltip: 'Go to Page',
+              tooltip: strings.goToPage(),
               onPressed: _showPageSearchDialog,
             ),
             const SizedBox(width: 4),
             Text(
-              'Page $_currentPage',
+              strings.pageLabel(_currentPage),
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
@@ -1173,8 +1206,8 @@ class _QuranScreenState extends State<QuranScreen> {
               color: _bookmarkedPage == _currentPage ? Colors.amber : null,
             ),
             tooltip: _bookmarkedPage == _currentPage
-                ? 'Remove Bookmark'
-                : 'Save Bookmark',
+              ? strings.removeBookmark()
+              : strings.saveBookmark(),
             onPressed: _toggleBookmark,
           ),
           PopupMenuButton<String>(
@@ -1208,32 +1241,34 @@ class _QuranScreenState extends State<QuranScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'go_page', child: Text('Go to Page')),
-              const PopupMenuItem(
+              PopupMenuItem(value: 'go_page', child: Text(strings.goToPage())),
+              PopupMenuItem(
                 value: 'downloads',
-                child: Text('Offline Downloads'),
+                child: Text(strings.offlineDownloads()),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'bookmark_jump',
-                child: Text('Go to Bookmark'),
+                child: Text(strings.goToBookmark()),
               ),
               PopupMenuItem(
                 value: 'translation_toggle',
                 child: Text(
-                  _showTranslation ? 'Hide Translation' : 'Show Translation',
+                  _showTranslation
+                      ? strings.hideTranslation()
+                      : strings.showTranslation(),
                 ),
               ),
               PopupMenuItem(
                 value: 'continuous_toggle',
                 child: Text(
                   _preferContinuousPlayback
-                      ? 'Continuous Tap Play: On'
-                      : 'Continuous Tap Play: Off',
+                      ? strings.continuousTapPlayOn()
+                      : strings.continuousTapPlayOff(),
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'language_picker',
-                child: Text('Translation Language'),
+                child: Text(strings.translationLanguage()),
               ),
             ],
           ),
@@ -1331,7 +1366,7 @@ class _QuranScreenState extends State<QuranScreen> {
     final dynamic pageData = Quran.getSurahVersesInPageAsList(pageNum);
 
     if (pageData == null) {
-      return const Center(child: Text('Page not found'));
+      return Center(child: Text(AppStrings.of(context).pageNotFound()));
     }
 
     return LayoutBuilder(
@@ -1628,6 +1663,7 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Widget _buildStatusBar() {
+    final strings = AppStrings.of(context);
     double overallProgress = _currentPage / 604;
     final dailyTarget = _dailyTargetPages <= 0 ? 1.0 : _dailyTargetPages;
     final dailyProgress = (_pagesReadToday / dailyTarget).clamp(0.0, 1.0);
@@ -1661,6 +1697,20 @@ class _QuranScreenState extends State<QuranScreen> {
             'DAILY',
             dailyProgress,
             '$_pagesReadToday / ${dailyTarget.toStringAsFixed(1)}',
+            action: (_returnReadingPage != null &&
+                    _returnReadingPage != _currentPage)
+                ? TextButton(
+                    onPressed: _jumpToReadingPage,
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.brown,
+                      visualDensity: VisualDensity.compact,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: const Size(0, 28),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    child: Text(strings.goToReading()),
+                  )
+                : null,
           ),
           const SizedBox(height: 8),
           _buildProgressRow(
@@ -1675,7 +1725,12 @@ class _QuranScreenState extends State<QuranScreen> {
     );
   }
 
-  Widget _buildProgressRow(String label, double value, String trailing) {
+  Widget _buildProgressRow(
+    String label,
+    double value,
+    String trailing, {
+    Widget? action,
+  }) {
     return Column(
       children: [
         Row(
@@ -1689,9 +1744,18 @@ class _QuranScreenState extends State<QuranScreen> {
                 color: Colors.grey,
               ),
             ),
-            Text(
-              trailing,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  trailing,
+                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                ),
+                if (action != null) ...[
+                  const SizedBox(width: 6),
+                  action,
+                ],
+              ],
             ),
           ],
         ),
@@ -1708,32 +1772,33 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Widget _buildIndexDrawer() {
+    final strings = AppStrings.of(context);
     return Drawer(
       child: Column(
         children: [
           DrawerHeader(
             decoration: const BoxDecoration(color: Colors.brown),
-            child: const Center(
+            child: Center(
               child: Text(
-                'Surah Index',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+                strings.surahIndex(),
+                style: const TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
           ),
           ListTile(
             leading: const Icon(Icons.bookmark),
-            title: const Text('Go to Bookmark'),
+            title: Text(strings.goToBookmark()),
             subtitle: Text(
               _bookmarkedPage > 0
-                  ? 'Page $_bookmarkedPage'
-                  : 'No bookmark saved',
+                  ? strings.pageLabel(_bookmarkedPage)
+                  : strings.noBookmarkSaved(),
             ),
             onTap: _jumpToBookmark,
           ),
           ListTile(
             leading: const Icon(Icons.manage_search),
-            title: const Text('Go to Page'),
-            subtitle: const Text('Jump to any page (1-604)'),
+            title: Text(strings.goToPage()),
+            subtitle: Text(strings.jumpToAnyPage()),
             onTap: _showPageSearchDialog,
           ),
           const Divider(height: 1),
@@ -1757,7 +1822,7 @@ class _QuranScreenState extends State<QuranScreen> {
                       surahNumber: index + 1,
                       verseNumber: 1,
                     );
-                    _jumpToPage(startPage);
+                    _jumpToPage(startPage, captureReadingPage: true);
                   },
                 );
               },

@@ -185,6 +185,12 @@ class AppStrings {
 
   String offlineDownloads() => t('offline_downloads');
   String downloadScope() => t('download_scope');
+  String scopeSurah() => t('scope_surah');
+  String scopeJuz() => t('scope_juz');
+  String scopeAll() => t('scope_all');
+  String juzLabel(int juz) => t('juz_label', vars: {'juz': juz.toString()});
+    String vibrationOn() => t('vibration_on');
+    String vibrationOff() => t('vibration_off');
   String selectSurahs() => t('select_surahs');
   String selectJuz() => t('select_juz');
   String translations() => t('translations');
@@ -230,9 +236,25 @@ class AppStrings {
   String highlightVerse() => t('highlight_verse');
   String removeHighlight() => t('remove_highlight');
   String showTranslation() => t('show_translation');
+  String hideTranslation() => t('hide_translation');
   String playContinuously() => t('play_continuously');
+  String playContinuouslyShort() => t('play_continuously_short');
   String stopContinuous() => t('stop_continuous');
+  String stopContinuousShort() => t('stop_continuous_short');
   String keepPlayingSubtitle() => t('keep_playing_subtitle');
+  String continuousTapPlayOn() => t('continuous_tap_play_on');
+  String continuousTapPlayOff() => t('continuous_tap_play_off');
+  String jumpToAnyPage() => t('jump_to_any_page');
+  String accidentalSurahOpenedHint() => t('accidental_surah_opened_hint');
+  String returnToPreviousPageAction() => t('return_to_previous_page_action');
+  String backToReadingPageLabel(int page) =>
+      t('back_to_reading_page_label', vars: {'page': page.toString()});
+  String goToReading() => t('go_to_reading');
+  String translationShort() => t('translation_short');
+  String highlightShort() => t('highlight_short');
+  String unhighlightShort() => t('unhighlight_short');
+  String saveBookmark() => t('save_bookmark');
+  String removeBookmark() => t('remove_bookmark');
   String playingVerse() => t('playing_verse');
   String continuousPlaybackActive() => t('continuous_playback_active');
   String continuousPlaybackFinished() => t('continuous_playback_finished');
@@ -328,6 +350,12 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'custom_dhikr': 'Custom',
     'offline_downloads': 'Offline Downloads',
     'download_scope': 'Download Scope',
+    'scope_surah': 'Surah',
+    'scope_juz': 'Juz',
+    'scope_all': 'All',
+    'juz_label': 'Juz {juz}',
+      'vibration_on': 'Vibration: On',
+      'vibration_off': 'Vibration: Off',
     'select_surahs': 'Select Surahs',
     'select_juz': 'Select Juz',
     'translations': 'Translations',
@@ -368,9 +396,25 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'highlight_verse': 'Highlight Verse',
     'remove_highlight': 'Remove Highlight',
     'show_translation': 'Show Translation',
+    'hide_translation': 'Hide Translation',
     'play_continuously': 'Play Continuously from Here',
+    'play_continuously_short': 'Play Continuously',
     'stop_continuous': 'Stop Continuous Play',
+    'stop_continuous_short': 'Stop Continuous',
     'keep_playing_subtitle': 'Keeps playing next verses automatically',
+    'continuous_tap_play_on': 'Continuous Tap Play: On',
+    'continuous_tap_play_off': 'Continuous Tap Play: Off',
+    'jump_to_any_page': 'Jump to any page (1-604)',
+    'accidental_surah_opened_hint':
+      'Opened a new surah page. Tap to return to your reading.',
+    'return_to_previous_page_action': 'Back to reading',
+    'back_to_reading_page_label': 'Back to reading page (Pg {page})',
+    'go_to_reading': 'Go to Reading',
+    'translation_short': 'Translation',
+    'highlight_short': 'Highlight',
+    'unhighlight_short': 'Unhighlight',
+    'save_bookmark': 'Save Bookmark',
+    'remove_bookmark': 'Remove Bookmark',
     'playing_verse':
         'Playing verse audio... (long-press and choose Stop Audio)',
     'continuous_playback_active':
@@ -460,6 +504,12 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'custom_dhikr': 'ራስህ ምርጫ',
     'offline_downloads': 'የመስመር ውጭ ማውረድ',
     'download_scope': 'የማውረድ ወሰን',
+    'scope_surah': 'ሱራ',
+    'scope_juz': 'ጁዝ',
+    'scope_all': 'ሁሉም',
+    'juz_label': 'ጁዝ {juz}',
+      'vibration_on': 'ንዝረት: በርቷል',
+      'vibration_off': 'ንዝረት: ጠፍቷል',
     'select_surahs': 'ሱራዎችን ይምረጡ',
     'select_juz': 'ጁዝ ይምረጡ',
     'translations': 'ትርጉሞች',
@@ -499,9 +549,25 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'highlight_verse': 'አድምቅ',
     'remove_highlight': 'አድምቅን አንሳ',
     'show_translation': 'ትርጉም አሳይ',
+    'hide_translation': 'ትርጉም ደብቅ',
     'play_continuously': 'ከዚህ ጀምሮ ቀጥታ አጫውት',
+    'play_continuously_short': 'ቀጥታ አጫውት',
     'stop_continuous': 'ቀጥታ አቁም',
+    'stop_continuous_short': 'ቀጥታ አቁም',
     'keep_playing_subtitle': 'ቀጣይ አያቶችን በራሱ ይቀጥላል',
+    'continuous_tap_play_on': 'በመንካት ቀጥታ ማጫወት: በርቷል',
+    'continuous_tap_play_off': 'በመንካት ቀጥታ ማጫወት: ጠፍቷል',
+    'jump_to_any_page': 'ወደ ማንኛውም ገጽ ይሂዱ (1-604)',
+    'accidental_surah_opened_hint':
+      'አዲስ የሱራ ገጽ ተከፍቷል። ወደ ንባብዎ ለመመለስ ይንኩ።',
+    'return_to_previous_page_action': 'ወደ ንባብ ተመለስ',
+    'back_to_reading_page_label': 'ወደ ንባብ ገጽ ተመለስ (ገጽ {page})',
+    'go_to_reading': 'ወደ ንባብ ሂድ',
+    'translation_short': 'ትርጉም',
+    'highlight_short': 'አድምቅ',
+    'unhighlight_short': 'አድምቅን አንሳ',
+    'save_bookmark': 'ምልክት አስቀምጥ',
+    'remove_bookmark': 'ምልክት አንሳ',
     'playing_verse': 'የአያት ድምጽ በመጫወት ላይ... (ረዥም ጫን እና አቁም ምረጥ)',
     'continuous_playback_active':
         'ቀጥታ መቀጠል በመጫወት ላይ... (ረዥም ጫን እና ቀጥታ አቁም ምረጥ)',

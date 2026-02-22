@@ -51,7 +51,8 @@ class HomeScreenState extends State<HomeScreen> {
   Timer? _inspirationTimer;
   int _quranPagesPerPrayer = 4; // Dynamic based on Planner Goal
   int _lastRoundsGoal = 1;
-  DailyText? _dailyAyah;
+  int? _dailyAyahSurah;
+  int? _dailyAyahVerse;
   late final PageController _inspirationController;
   int _inspirationPage = 0;
 
@@ -340,15 +341,40 @@ class HomeScreenState extends State<HomeScreen> {
       await _prefs.setInt('daily_ayah_ayah', ayah);
     }
 
-    final verse = Quran.getVerse(
-      surahNumber: surah,
-      verseNumber: ayah,
-      language: QuranLanguage.english,
-    ).text;
+    _dailyAyahSurah = surah;
+    _dailyAyahVerse = ayah;
+  }
 
-    _dailyAyah = DailyText(
-      title: 'Ayah of the Day',
-      text: verse,
+  DailyText? _dailyAyahForLanguage(AppLanguage language) {
+    final surah = _dailyAyahSurah;
+    final ayah = _dailyAyahVerse;
+    if (surah == null || ayah == null) {
+      return null;
+    }
+
+    final quranLanguage = language == AppLanguage.amharic
+        ? QuranLanguage.amharic
+        : QuranLanguage.english;
+
+    String verseText;
+    try {
+      verseText = Quran.getVerse(
+        surahNumber: surah,
+        verseNumber: ayah,
+        language: quranLanguage,
+      ).text;
+    } catch (_) {
+      verseText = Quran.getVerse(
+        surahNumber: surah,
+        verseNumber: ayah,
+        language: QuranLanguage.english,
+      ).text;
+    }
+
+    final localized = AppStrings.forLanguage(language);
+    return DailyText(
+      title: localized.ayahOfDay(),
+      text: verseText,
       source: 'Quran $surah:$ayah',
     );
   }
@@ -457,9 +483,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatTime(DateTime time) {
-    final hour = time.hour.toString().padLeft(2, '0');
+    final hour24 = time.hour;
+    final hour12 = (hour24 % 12 == 0 ? 12 : hour24 % 12)
+        .toString()
+        .padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
+    final period = hour24 >= 12 ? 'PM' : 'AM';
+    return '$hour12:$minute $period';
   }
 
   // --- 2. ADHAN OFFLINE CALCULATION ---
@@ -738,7 +768,9 @@ class HomeScreenState extends State<HomeScreen> {
     final isLastTen = isRamadan && hijriDay >= 21;
     final monthName = _hijriMonthNames[(hijriMonth - 1).clamp(0, 11)];
     final inspirationIndex = hijriDay;
-    final dailyAyah = _dailyAyah;
+    final dailyAyah = _dailyAyahForLanguage(strings.language);
+    final duaItems = duasForLanguage(strings.language);
+    final hadithItems = hadithForLanguage(strings.language);
     final inspirationItems = <DailyText>[
       dailyAyah == null
           ? DailyText(
@@ -751,8 +783,8 @@ class HomeScreenState extends State<HomeScreen> {
               text: dailyAyah.text,
               source: dailyAyah.source,
             ),
-      duas[inspirationIndex % duas.length],
-      hadith[inspirationIndex % hadith.length],
+      duaItems[inspirationIndex % duaItems.length],
+      hadithItems[inspirationIndex % hadithItems.length],
     ];
 
     _scheduleRoundsSyncIfNeeded();

@@ -1,0 +1,1132 @@
+{
+  "rows": [
+    {
+      "key": "all_surahs_downloaded",
+      "english": "All surahs will be downloaded.",
+      "amharic": "ሁሉም ሱራዎች ይወረዳሉ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "amharic",
+      "english": "Amharic",
+      "amharic": "አማርኛ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "app_settings",
+      "english": "App Settings",
+      "amharic": "የመተግበሪያ ቅንብሮች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "app_title",
+      "english": "Baraka30",
+      "amharic": "Baraka30",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "assalamu_alaikum",
+      "english": "Assalamu Alaikum",
+      "amharic": "ሰላም እንዴት ነው",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "audio",
+      "english": "Audio",
+      "amharic": "ድምጽ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "ayah_loading",
+      "english": "",
+      "amharic": "የዛሬን አያት በመጫን ላይ...",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "ayah_of_day",
+      "english": "Ayah of the Day",
+      "amharic": "የዛሬ አያት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "cancel",
+      "english": "Cancel",
+      "amharic": "ተው",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checking",
+      "english": "Checking...",
+      "amharic": "በመመርመር ላይ...",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_asr",
+      "english": "Asr + Read {pages} Pages",
+      "amharic": "አስር + {pages} ገጾች አንብብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_dhikr",
+      "english": "Morning/Evening Dhikr",
+      "amharic": "የጠዋት/የማታ ዝክር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_dhuhr",
+      "english": "Dhuhr + Read {pages} Pages",
+      "amharic": "ዙህር + {pages} ገጾች አንብብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_fajr",
+      "english": "Fajr + Read {pages} Pages",
+      "amharic": "ፈጅር + {pages} ገጾች አንብብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_isha",
+      "english": "Isha + Read {pages} Pages",
+      "amharic": "ኢሻ + {pages} ገጾች አንብብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_maghrib",
+      "english": "Maghrib + Read {pages} Pages",
+      "amharic": "መግሪብ + {pages} ገጾች አንብብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "checklist_taraweeh",
+      "english": "Taraweeh/Tahajjud",
+      "amharic": "ተራዊህ/ተሐጅዱ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "continuous_playback_active",
+      "english": "Continuous playback active... (long-press and choose Stop Continuous Play)",
+      "amharic": "ቀጥታ መቀጠል በመጫወት ላይ... (ረዥም ጫን እና ቀጥታ አቁም ምረጥ)",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "continuous_playback_finished",
+      "english": "Continuous playback finished.",
+      "amharic": "ቀጥታ መጫወት ተጠናቀቀ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "continuous_tap_play_off",
+      "english": "Continuous Tap Play: Off",
+      "amharic": "በመንካት ቀጥታ ማጫወት: ጠፍቷል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "continuous_tap_play_on",
+      "english": "Continuous Tap Play: On",
+      "amharic": "በመንካት ቀጥታ ማጫወት: በርቷል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "could_not_continue",
+      "english": "Could not continue playback.",
+      "amharic": "መቀጠል አልተቻለም።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "could_not_play_verse",
+      "english": "Could not play this verse audio.",
+      "amharic": "የዚህ አያት ድምጽ ማጫወት አልተቻለም።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "could_not_start_continuous",
+      "english": "Could not start continuous audio.",
+      "amharic": "ቀጥታ ድምጽ መጀመር አልተቻለም።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "custom_dhikr",
+      "english": "Custom",
+      "amharic": "ራስህ ምርጫ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "daily_checklist",
+      "english": "Daily Checklist",
+      "amharic": "የዕለት ተዕለት ዝርዝር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "daily_goal",
+      "english": "Daily Goal",
+      "amharic": "ዕለታዊ ግብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "daily_niyyah",
+      "english": "DAILY NIYYAH",
+      "amharic": "የዕለት ነድያህ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "daily_quran_target",
+      "english": "Daily Quran Target",
+      "amharic": "የዕለት ቁርአን ግብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "daily_reading_schedule",
+      "english": "Daily Reading Schedule",
+      "amharic": "የዕለት ንባብ ሰሌዳ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "default_translation",
+      "english": "Default translation",
+      "amharic": "ነባሪ ትርጉም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "download_audio",
+      "english": "Download audio",
+      "amharic": "ድምጽ አውርድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "download_failed",
+      "english": "Download failed: {error}",
+      "amharic": "ማውረድ አልተሳካም፦ {error}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "download_scope",
+      "english": "Download Scope",
+      "amharic": "የማውረድ ወሰን",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "download_translations",
+      "english": "Download translations",
+      "amharic": "ትርጉሞችን አውርድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "downloading_audio",
+      "english": "Downloading audio (Surah {surah})...",
+      "amharic": "ድምጽ በማውረድ ላይ (ሱራ {surah})...",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "downloading_translation",
+      "english": "Downloading translation {key} (Surah {surah})...",
+      "amharic": "ትርጉም {key} በማውረድ ላይ (ሱራ {surah})...",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "downloads_complete",
+      "english": "Downloads complete.",
+      "amharic": "ማውረድ ተጠናቀቀ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "english",
+      "english": "English",
+      "amharic": "እንግሊዝኛ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "enter_page_error",
+      "english": "Enter a number from 1 to 604",
+      "amharic": "1 እስከ 604 ያለ ቁጥር ያስገቡ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "fasting",
+      "english": "FASTING",
+      "amharic": "ጾም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "go_button",
+      "english": "Go",
+      "amharic": "ሂድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "go_to_bookmark",
+      "english": "Go to Bookmark",
+      "amharic": "ወደ ምልክት ሂድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "go_to_page",
+      "english": "Go to Page",
+      "amharic": "ወደ ገጽ ሂድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "go_to_page_title",
+      "english": "Go to Page",
+      "amharic": "ወደ ገጽ ሂድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "goal_set_message",
+      "english": "Goal set to {value} Round{s}!",
+      "amharic": "ግብ ተዘጋጅቷል፦ {value} ዙር{plural}!",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hero_dhikr",
+      "english": "Dhikr",
+      "amharic": "ዝክር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hero_dua",
+      "english": "Dua",
+      "amharic": "ዱዓ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hero_month_message",
+      "english": "Keep your Quran rhythm in {month}",
+      "amharic": "በ{month} የቁርአን ልምድዎን ይጠብቁ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hero_ramadan_message",
+      "english": "Stay steady on Day {day} of Ramadan",
+      "amharic": "በረመዳን {day} ቀን በጽናት ቆዩ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hero_read",
+      "english": "Read",
+      "amharic": "ንባብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hide_translation",
+      "english": "Hide Translation",
+      "amharic": "ትርጉም ደብቅ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "highlight_short",
+      "english": "Highlight",
+      "amharic": "አድምቅ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "highlight_verse",
+      "english": "Highlight Verse",
+      "amharic": "አድምቅ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "hijri_date",
+      "english": "{month} {day}, {year} AH",
+      "amharic": "{month} {day}, {year} አህ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "jump_to_any_page",
+      "english": "Jump to any page (1-604)",
+      "amharic": "ወደ ማንኛውም ገጽ ይሂዱ (1-604)",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "juz_label",
+      "english": "Juz {juz}",
+      "amharic": "ጁዝ {juz}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "keep_playing_subtitle",
+      "english": "Keeps playing next verses automatically",
+      "amharic": "ቀጣይ አያቶችን በራሱ ይቀጥላል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "language",
+      "english": "Language",
+      "amharic": "ቋንቋ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "last_location_updated",
+      "english": "Last updated location: {time}",
+      "amharic": "የመጨረሻ የአካባቢ ዝመና: {time}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "last_ten_nights",
+      "english": "LAST 10 NIGHTS",
+      "amharic": "የመጨረሻ 10 ሌሊቶች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "local_time",
+      "english": "Local Time",
+      "amharic": "አካባቢ ሰዓት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_denied_forever_message",
+      "english": "Location permission is permanently denied. Open settings to allow it for accurate prayer times.",
+      "amharic": "የአካባቢ ፍቃድ ለዘላቂ ተከልክሏል። ትክክለኛ የሶላት ጊዜ ለማግኘት ቅንብሮች ይክፈቱ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_denied_message",
+      "english": "Location permission is required for accurate prayer times.",
+      "amharic": "ትክክለኛ የሶላት ጊዜ ለማስረጃ የአካባቢ ፍቃድ ያስፈልጋል።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_required_message",
+      "english": "Location is required for accurate prayer times.",
+      "amharic": "ትክክለኛ የሶላት ጊዜ ለማስረጃ አካባቢ ያስፈልጋል።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_required_title",
+      "english": "Accurate Prayer Times Need Location",
+      "amharic": "ትክክለኛ የሶላት ጊዜ ለመሆን አካባቢ ያስፈልጋል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_service_off_message",
+      "english": "Enable location services to calculate prayer times accurately.",
+      "amharic": "ትክክለኛ የሶላት ጊዜ ለማስረጃ የአካባቢ አገልግሎት አብራሩ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_settings",
+      "english": "Location Settings",
+      "amharic": "የአካባቢ ቅንብሮች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "location_unable_message",
+      "english": "Unable to get accurate location right now. Please retry.",
+      "amharic": "አሁን ትክክለኛ አካባቢ ማግኘት አልተቻለም። እባክዎ ደግመው ይሞክሩ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "monthly_progress",
+      "english": "Monthly Progress",
+      "amharic": "ወርሃዊ እድገት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "monthly_quran_target",
+      "english": "Monthly Quran Target",
+      "amharic": "ወርሃዊ ቁርአን ግብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "nav_dhikr",
+      "english": "Dhikr",
+      "amharic": "ዝክር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "nav_home",
+      "english": "Home",
+      "amharic": "ቤት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "nav_planner",
+      "english": "Planner",
+      "amharic": "እቅድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "nav_quran",
+      "english": "Quran",
+      "amharic": "ቁርአን",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "niyyah_text",
+      "english": "“I intend to fast this day of Ramadan for the sake of Allah.”",
+      "amharic": "“ይህን የረመዳን ቀን ለአላህ ስለማድረግ ለመጾም እቆማለሁ።”",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "no",
+      "english": "No",
+      "amharic": "አይ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "no_bookmark_saved",
+      "english": "No bookmark saved",
+      "amharic": "ምንም ምልክት የለም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "offline_downloads",
+      "english": "Offline Downloads",
+      "amharic": "የመስመር ውጭ ማውረድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "offline_not_available_web",
+      "english": "Offline downloads are not available on Web. Use mobile or desktop builds for offline storage.",
+      "amharic": "በድር ላይ የመስመር ውጭ ማውረድ አይቻልም። ለመስመር ውጭ ማከማቻ የሞባይል ወይም ዴስክቶፕ ግንባታ ይጠቀሙ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "offline_not_supported_web",
+      "english": "Offline downloads are not supported on web.",
+      "amharic": "በድር ላይ የመስመር ውጭ ማውረድ አይቻልም።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "ok",
+      "english": "OK",
+      "amharic": "እሺ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "page_label",
+      "english": "Page {page}",
+      "amharic": "ገጽ {page}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "page_not_found",
+      "english": "Page not found",
+      "amharic": "ገጽ አልተገኘም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "page_number_hint",
+      "english": "1 - 604",
+      "amharic": "1 - 604",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "page_number_label",
+      "english": "Page number",
+      "amharic": "የገጽ ቁጥር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "pages",
+      "english": "Pages",
+      "amharic": "ገጾች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "play_audio",
+      "english": "Play Audio",
+      "amharic": "ድምጽ አጫውት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "play_continuously",
+      "english": "Play Continuously from Here",
+      "amharic": "ከዚህ ጀምሮ ቀጥታ አጫውት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "play_continuously_short",
+      "english": "Play Continuously",
+      "amharic": "ቀጥታ አጫውት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "playing_verse",
+      "english": "Playing verse audio... (long-press and choose Stop Audio)",
+      "amharic": "የአያት ድምጽ በመጫወት ላይ... (ረዥም ጫን እና አቁም ምረጥ)",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "prayer_asr",
+      "english": "Asr",
+      "amharic": "አስር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "prayer_dhuhr",
+      "english": "Dhuhr",
+      "amharic": "ዙህር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "prayer_fajr",
+      "english": "Fajr",
+      "amharic": "ፈጅር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "prayer_isha",
+      "english": "Isha",
+      "amharic": "ኢሻ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "prayer_maghrib",
+      "english": "Maghrib",
+      "amharic": "መግሪብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "quran_completion_goal",
+      "english": "Quran Completion Goal",
+      "amharic": "የቁርአን ማጠናቀቂያ ግብ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "ramadan_day",
+      "english": "Ramadan Day {day}",
+      "amharic": "የረመዳን ቀን {day}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "ramadan_planner",
+      "english": "Ramadan Planner",
+      "amharic": "የረመዳን እቅድ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "read_daily_progress",
+      "english": "Read {read} / {target} pages in Quran to fill this bar.",
+      "amharic": "ይህን መደርደሪያ ለመሙላት {read} / {target} ገጾች አንብብ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "read_monthly_progress",
+      "english": "Read {read} / {target} pages this month.",
+      "amharic": "በዚህ ወር {read} / {target} ገጾች አንብብ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "reciter",
+      "english": "Reciter",
+      "amharic": "ቃርኢ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "remove_bookmark",
+      "english": "Remove Bookmark",
+      "amharic": "ምልክት አንሳ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "remove_highlight",
+      "english": "Remove Highlight",
+      "amharic": "አድምቅን አንሳ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "reset_counter",
+      "english": "Reset Counter?",
+      "amharic": "ቆጣሪውን ይጀምሩ?",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "retry",
+      "english": "Retry",
+      "amharic": "ደግመው ይሞክሩ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "round_label",
+      "english": "{value} Round{s} (Khatam)",
+      "amharic": "{value} ዙር{plural} (ከተም)",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "save_bookmark",
+      "english": "Save Bookmark",
+      "amharic": "ምልክት አስቀምጥ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "scope_all",
+      "english": "All",
+      "amharic": "ሁሉም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "scope_juz",
+      "english": "Juz",
+      "amharic": "ጁዝ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "scope_surah",
+      "english": "Surah",
+      "amharic": "ሱራ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "select_at_least_one",
+      "english": "Select at least one surah or juz.",
+      "amharic": "ቢያንስ አንድ ሱራ ወይም ጁዝ ይምረጡ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "select_juz",
+      "english": "Select Juz",
+      "amharic": "ጁዝ ይምረጡ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "select_surahs",
+      "english": "Select Surahs",
+      "amharic": "ሱራዎችን ይምረጡ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "sets_completed",
+      "english": "{count} Sets of 33 Completed",
+      "amharic": "{count} የ33 ስብስቦች ተጠናቀቁ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "show_translation",
+      "english": "Show Translation",
+      "amharic": "ትርጉም አሳይ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "start_download",
+      "english": "Start Download",
+      "amharic": "ማውረድ ጀምር",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "starting_downloads",
+      "english": "Starting downloads...",
+      "amharic": "ማውረድ ተጀምሯል...",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "stop_audio",
+      "english": "Stop Audio",
+      "amharic": "ድምጽ አቁም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "stop_continuous",
+      "english": "Stop Continuous Play",
+      "amharic": "ቀጥታ አቁም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "stop_continuous_short",
+      "english": "Stop Continuous",
+      "amharic": "ቀጥታ አቁም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "sunnah_tip_evening",
+      "english": "Sunnah: Break your fast with dates and water.",
+      "amharic": "ሱና፡ ጾምዎን በዘንባባ እና በውሃ ያፍቱ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "sunnah_tip_morning",
+      "english": "Sunnah: Use Miswak to keep your breath fresh while fasting.",
+      "amharic": "ሱና፡ በጾም ወቅት የአፍዎን ጠረን ለመጠበቅ ሚስዋክ ይጠቀሙ።",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "surah_index",
+      "english": "Surah Index",
+      "amharic": "የሱራ ማውጫ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "tap_circle",
+      "english": "Tap anywhere on the circle",
+      "amharic": "በክብ ላይ ይንኩ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "tasbih",
+      "english": "Tasbih",
+      "amharic": "ጠስብህ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "tip_tap_verse",
+      "english": "Tip: Tap verse to play • Long-press ayah marker for options",
+      "amharic": "ጠቅ በማድረግ ድምጽ አጫውት • ለአማራጮች የአያት ምልክትን ረዥም ጫን",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "todays_inspiration",
+      "english": "",
+      "amharic": "ዛሬ መነሳሳት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "todays_progress",
+      "english": "",
+      "amharic": "የዛሬ እድገት",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "toggle_translation",
+      "english": "Toggle Translation",
+      "amharic": "ትርጉም አሳይ/ደብቅ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "total_pages",
+      "english": "Total Pages",
+      "amharic": "ጠቅላላ ገጾች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "translation_language",
+      "english": "Translation Language",
+      "amharic": "የትርጉም ቋንቋ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "translation_short",
+      "english": "Translation",
+      "amharic": "ትርጉም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "translations",
+      "english": "Translations",
+      "amharic": "ትርጉሞች",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "unhighlight_short",
+      "english": "Unhighlight",
+      "amharic": "አድምቅን አንሳ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "until_prayer",
+      "english": "until {prayer}",
+      "amharic": "እስከ {prayer}",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "use_downloaded_audio",
+      "english": "Use downloaded audio when available",
+      "amharic": "የወረደ ድምጽ ሲኖር ተጠቀም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "use_downloaded_translations",
+      "english": "Use downloaded translations",
+      "amharic": "የወረዱ ትርጉሞችን ተጠቀም",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "vibration_off",
+      "english": "Vibration: Off",
+      "amharic": "ንዝረት: ጠፍቷል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "vibration_on",
+      "english": "Vibration: On",
+      "amharic": "ንዝረት: በርቷል",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    },
+    {
+      "key": "yes",
+      "english": "Yes",
+      "amharic": "አዎ",
+      "translator_draft": "",
+      "manual_review": "",
+      "notes": ""
+    }
+  ]
+}
