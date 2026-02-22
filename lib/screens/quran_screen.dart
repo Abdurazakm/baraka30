@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quran_flutter/quran_flutter.dart';
 import 'package:flutter/gestures.dart';
 import '../services/offline_quran_service.dart';
+import '../services/progress_reset_service.dart';
 import 'downloads_screen.dart';
 
 class QuranScreen extends StatefulWidget {
@@ -155,48 +156,27 @@ class _QuranScreenState extends State<QuranScreen> {
     _dailyTargetPages = (_rounds * 604) / 30;
   }
 
-  String _formatDate(DateTime date) {
-    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-  }
-
-  String _formatMonth(DateTime date) {
-    return "${date.year}-${date.month.toString().padLeft(2, '0')}";
-  }
-
   Future<void> _loadDailyProgress() async {
-    final today = _formatDate(DateTime.now());
-    final storedDate = _prefs.getString('quran_progress_date') ?? '';
-
-    if (storedDate != today) {
-      await _prefs.setString('quran_progress_date', today);
-      await _prefs.setStringList('quran_pages_read_today', <String>[]);
-      await _resetDailyChecklist();
-      _progressDateKey = today;
-      _pagesReadToday = 0;
-      return;
-    }
-
+    final rounds = _prefs.getInt('quran_rounds_goal') ?? _rounds;
+    final result = await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: _prefs,
+      rounds: rounds,
+    );
     final storedPages =
         _prefs.getStringList('quran_pages_read_today') ?? <String>[];
-    _progressDateKey = today;
+    _progressDateKey = result.todayKey;
     _pagesReadToday = storedPages.length;
   }
 
   Future<void> _loadMonthlyProgress() async {
-    final monthKey = _formatMonth(DateTime.now());
-    final storedMonth = _prefs.getString('quran_progress_month') ?? '';
-
-    if (storedMonth != monthKey) {
-      await _prefs.setString('quran_progress_month', monthKey);
-      await _prefs.setStringList('quran_pages_read_month', <String>[]);
-      _progressMonthKey = monthKey;
-      _pagesReadMonth = 0;
-      return;
-    }
-
+    final rounds = _prefs.getInt('quran_rounds_goal') ?? _rounds;
+    final result = await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: _prefs,
+      rounds: rounds,
+    );
     final storedPages =
         _prefs.getStringList('quran_pages_read_month') ?? <String>[];
-    _progressMonthKey = monthKey;
+    _progressMonthKey = result.monthKey;
     _pagesReadMonth = storedPages.length;
   }
 
@@ -207,22 +187,13 @@ class _QuranScreenState extends State<QuranScreen> {
 
     _isRefreshing = true;
     try {
-      final today = _formatDate(DateTime.now());
-      final storedDate = _prefs.getString('quran_progress_date') ?? '';
-      final monthKey = _formatMonth(DateTime.now());
-      final storedMonth = _prefs.getString('quran_progress_month') ?? '';
       final rounds = _prefs.getInt('quran_rounds_goal') ?? _rounds;
-
-      if (storedDate != today) {
-        await _prefs.setString('quran_progress_date', today);
-        await _prefs.setStringList('quran_pages_read_today', <String>[]);
-        await _resetDailyChecklist();
-      }
-
-      if (storedMonth != monthKey) {
-        await _prefs.setString('quran_progress_month', monthKey);
-        await _prefs.setStringList('quran_pages_read_month', <String>[]);
-      }
+      final result = await ProgressResetService.ensureCalendarProgressCurrent(
+        prefs: _prefs,
+        rounds: rounds,
+      );
+      final today = result.todayKey;
+      final monthKey = result.monthKey;
 
       final storedPages =
           _prefs.getStringList('quran_pages_read_today') ?? <String>[];
@@ -262,22 +233,18 @@ class _QuranScreenState extends State<QuranScreen> {
   }
 
   Future<void> _trackPageRead(int pageNum) async {
-    final today = _formatDate(DateTime.now());
-    final monthKey = _formatMonth(DateTime.now());
-
-    if (today != _progressDateKey) {
-      _progressDateKey = today;
+    final rounds = _prefs.getInt('quran_rounds_goal') ?? _rounds;
+    final result = await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: _prefs,
+      rounds: rounds,
+    );
+    _progressDateKey = result.todayKey;
+    _progressMonthKey = result.monthKey;
+    if (result.dailyReset) {
       _pagesReadToday = 0;
-      await _prefs.setString('quran_progress_date', today);
-      await _prefs.setStringList('quran_pages_read_today', <String>[]);
-      await _resetDailyChecklist();
     }
-
-    if (monthKey != _progressMonthKey) {
-      _progressMonthKey = monthKey;
+    if (result.monthlyReset) {
       _pagesReadMonth = 0;
-      await _prefs.setString('quran_progress_month', monthKey);
-      await _prefs.setStringList('quran_pages_read_month', <String>[]);
     }
 
     final storedPages =
@@ -316,23 +283,6 @@ class _QuranScreenState extends State<QuranScreen> {
         final taskTitle = '${prayers[i]} + Read $pagesPerPrayer Pages';
         await _prefs.setBool('task_$taskTitle', true);
       }
-    }
-  }
-
-  Future<void> _resetDailyChecklist() async {
-    final pagesPerPrayer = ((_rounds * 604) / 30 / 5).ceil();
-    final List<String> tasks = [
-      'Fajr + Read $pagesPerPrayer Pages',
-      'Dhuhr + Read $pagesPerPrayer Pages',
-      'Asr + Read $pagesPerPrayer Pages',
-      'Maghrib + Read $pagesPerPrayer Pages',
-      'Isha + Read $pagesPerPrayer Pages',
-      'Taraweeh/Tahajjud',
-      'Morning/Evening Dhikr',
-    ];
-
-    for (final task in tasks) {
-      await _prefs.setBool('task_$task', false);
     }
   }
 
@@ -590,6 +540,13 @@ class _QuranScreenState extends State<QuranScreen> {
   }) async {
     final selectedKey = _verseKey(surahNumber, verseNumber);
 
+    if (_isContinuousPlaybackActive) {
+      await _syncPageToPlayingVerse(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
+    }
+
     if (_useDownloadedAudio) {
       final file = await _offlineService.getOfflineAudioFile(
         reciterKey: _offlineReciterKey,
@@ -621,6 +578,35 @@ class _QuranScreenState extends State<QuranScreen> {
     setState(() => _playingVerseKey = selectedKey);
     await _audioPlayer.play(UrlSource(url));
     await _markAudioHintSeenOnce();
+  }
+
+  Future<void> _syncPageToPlayingVerse({
+    required int surahNumber,
+    required int verseNumber,
+  }) async {
+    if (!_pageController.hasClients) {
+      return;
+    }
+
+    final targetPage = Quran.getPageNumber(
+      surahNumber: surahNumber,
+      verseNumber: verseNumber,
+    );
+
+    if (targetPage == _currentPage) {
+      return;
+    }
+
+    final targetIndex = _pageIndexForNumber(targetPage);
+    final currentIndex = _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
+    final distance = (currentIndex - targetIndex).abs();
+    final durationMs = (180 + (distance * 10)).clamp(180, 900);
+
+    await _pageController.animateToPage(
+      targetIndex,
+      duration: Duration(milliseconds: durationMs),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   Future<void> _markAudioHintSeenOnce() async {

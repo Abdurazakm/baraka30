@@ -42,7 +42,6 @@ class AppLanguageController extends ChangeNotifier {
       case AppLanguage.amharic:
         return 'am';
       case AppLanguage.english:
-      default:
         return 'en';
     }
   }
@@ -52,8 +51,8 @@ class AppLanguageScope extends InheritedNotifier<AppLanguageController> {
   const AppLanguageScope({
     super.key,
     required AppLanguageController controller,
-    required Widget child,
-  }) : super(notifier: controller, child: child);
+    required super.child,
+  }) : super(notifier: controller);
 
   static AppLanguageController of(BuildContext context) {
     final scope = context

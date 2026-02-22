@@ -94,7 +94,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
       for (final juz in _selectedJuz) {
         final juzSurahs = Quran.getSurahVersesInJuzAsList(juz);
         for (final entry in juzSurahs) {
-          surahs.add(entry.surahNumber!);
+          surahs.add(entry.surahNumber);
         }
       }
       return surahs.toList()..sort();
@@ -331,7 +331,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         ),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: _activeTranslationKey,
+          initialValue: _activeTranslationKey,
           decoration: const InputDecoration(labelText: 'Default translation'),
           items: OfflineQuranService.translationOptions
               .map(
@@ -366,7 +366,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         const Text('Audio', style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _activeReciterKey,
+          initialValue: _activeReciterKey,
           decoration: const InputDecoration(labelText: 'Reciter'),
           items: OfflineQuranService.reciterOptions
               .map(

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/progress_reset_service.dart';
 
 class PlannerScreen extends StatefulWidget {
   const PlannerScreen({super.key, this.roundsGoalNotifier});
@@ -50,19 +51,11 @@ class _PlannerScreenState extends State<PlannerScreen> {
       widget.roundsGoalNotifier!.value = rounds;
     }
 
-    final today = _formatDate(DateTime.now());
-    final storedDate = prefs.getString('quran_progress_date') ?? '';
-    final monthKey = _formatMonth(DateTime.now());
-    final storedMonth = prefs.getString('quran_progress_month') ?? '';
-    if (storedDate != today) {
-      await prefs.setString('quran_progress_date', today);
-      await prefs.setStringList('quran_pages_read_today', <String>[]);
-      await _resetDailyChecklist(prefs, rounds);
-    }
-    if (storedMonth != monthKey) {
-      await prefs.setString('quran_progress_month', monthKey);
-      await prefs.setStringList('quran_pages_read_month', <String>[]);
-    }
+    await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: prefs,
+      rounds: rounds,
+      totalQuranPages: _totalQuranPages,
+    );
 
     final storedPages =
         prefs.getStringList('quran_pages_read_today') ?? <String>[];
@@ -93,21 +86,12 @@ class _PlannerScreenState extends State<PlannerScreen> {
     _isRefreshing = true;
     final prefs = await SharedPreferences.getInstance();
 
-    final today = _formatDate(DateTime.now());
-    final storedDate = prefs.getString('quran_progress_date') ?? '';
-    final monthKey = _formatMonth(DateTime.now());
-    final storedMonth = prefs.getString('quran_progress_month') ?? '';
     int rounds = prefs.getInt('quran_rounds_goal') ?? _rounds;
-
-    if (storedDate != today) {
-      await prefs.setString('quran_progress_date', today);
-      await prefs.setStringList('quran_pages_read_today', <String>[]);
-      await _resetDailyChecklist(prefs, rounds);
-    }
-    if (storedMonth != monthKey) {
-      await prefs.setString('quran_progress_month', monthKey);
-      await prefs.setStringList('quran_pages_read_month', <String>[]);
-    }
+    await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: prefs,
+      rounds: rounds,
+      totalQuranPages: _totalQuranPages,
+    );
 
     final storedPages =
         prefs.getStringList('quran_pages_read_today') ?? <String>[];
@@ -141,36 +125,6 @@ class _PlannerScreenState extends State<PlannerScreen> {
     _isRefreshing = false;
   }
 
-  Future<void> _resetDailyChecklist(SharedPreferences prefs, int rounds) async {
-    final pagesPerPrayer = ((rounds * _totalQuranPages) / 30 / 5).ceil();
-    final List<String> tasks = [
-      'Fajr + Read $pagesPerPrayer Pages',
-      'Dhuhr + Read $pagesPerPrayer Pages',
-      'Asr + Read $pagesPerPrayer Pages',
-      'Maghrib + Read $pagesPerPrayer Pages',
-      'Isha + Read $pagesPerPrayer Pages',
-      'Taraweeh/Tahajjud',
-      'Morning/Evening Dhikr',
-    ];
-
-    for (final task in tasks) {
-      await prefs.setBool('task_$task', false);
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
-  }
-
-  String _formatMonth(DateTime date) {
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    return '$year-$month';
-  }
-
   Future<void> _saveGoal(int value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('quran_rounds_goal', value);
@@ -197,8 +151,9 @@ class _PlannerScreenState extends State<PlannerScreen> {
     double dailyPages = totalPages / 30;
     double perPrayer = dailyPages / 5;
 
-    if (_isLoading)
+    if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text("Ramadan Planner")),

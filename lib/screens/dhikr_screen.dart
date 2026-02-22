@@ -340,7 +340,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.2),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
                       width: 2,
                     ),
                   ),
@@ -355,7 +355,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
                     color: theme.colorScheme.primaryContainer,
                     boxShadow: [
                       BoxShadow(
-                        color: theme.colorScheme.primary.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -363,7 +363,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
                     gradient: RadialGradient(
                       colors: [
                         theme.colorScheme.primaryContainer,
-                        theme.colorScheme.primary.withOpacity(0.8),
+                        theme.colorScheme.primary.withValues(alpha: 0.8),
                       ],
                     ),
                   ),

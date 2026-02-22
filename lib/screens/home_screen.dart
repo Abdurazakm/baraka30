@@ -14,6 +14,7 @@ import '../data/duas.dart';
 import '../data/hadith.dart';
 import '../data/daily_text.dart';
 import '../services/app_language.dart';
+import '../services/progress_reset_service.dart';
 
 // Widgets
 import '../widgets/ayah_card.dart';
@@ -60,7 +61,6 @@ class HomeScreenState extends State<HomeScreen> {
   bool _isLocationServiceDisabled = false;
   bool _isPermissionDeniedForever = false;
   DateTime? _lastLocationUpdatedAt;
-  String _localTimeZoneLabel = 'Local Time';
   _LocationStatus _locationStatus = _LocationStatus.required;
 
   final List<_ChecklistEntry> _checklist = [];
@@ -70,7 +70,12 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _loadData();
     // Refresh every minute to keep countdown and background colors accurate
-    _timer = Timer.periodic(const Duration(minutes: 1), (t) => setState(() {}));
+    _timer = Timer.periodic(const Duration(minutes: 1), (t) {
+      _refreshCalendarProgressIfNeeded();
+      if (mounted) {
+        setState(() {});
+      }
+    });
     widget.roundsGoalListenable?.addListener(_onRoundsGoalChanged);
     _inspirationController = PageController();
     _startInspirationTimer();
@@ -119,7 +124,12 @@ class HomeScreenState extends State<HomeScreen> {
     // (604 pages * rounds) / 30 days / 5 prayers
     _quranPagesPerPrayer = ((604 * rounds) / 30 / 5).ceil();
 
-    final today = _formatDate(DateTime.now());
+    await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: _prefs,
+      rounds: rounds,
+    );
+
+    final today = ProgressResetService.formatDate(DateTime.now());
 
     // 2. Initialize the dynamic checklist
     _updateChecklistItems();
@@ -139,6 +149,28 @@ class HomeScreenState extends State<HomeScreen> {
     await _loadDailyAyah();
     await _loadLocation();
     setState(() => _prefsReady = true);
+  }
+
+  Future<void> _refreshCalendarProgressIfNeeded() async {
+    if (!_prefsReady) {
+      return;
+    }
+
+    final rounds = _prefs.getInt('quran_rounds_goal') ?? _lastRoundsGoal;
+    final result = await ProgressResetService.ensureCalendarProgressCurrent(
+      prefs: _prefs,
+      rounds: rounds,
+    );
+
+    if (result.dailyReset) {
+      _quranPagesPerPrayer = ((604 * rounds) / 30 / 5).ceil();
+      _updateChecklistItems();
+      for (var item in _checklist) {
+        final storageKey = _checklistStorageKey(item.id, _quranPagesPerPrayer);
+        item.checked = _prefs.getBool('task_$storageKey') ?? false;
+      }
+      await _loadDailyAyah();
+    }
   }
 
   Future<void> _showLanguageSheet() async {
@@ -180,11 +212,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadLocalTimeZone() async {
     try {
-      final tz = await FlutterTimezone.getLocalTimezone();
-      if (!mounted) {
-        return;
-      }
-      setState(() => _localTimeZoneLabel = tz);
+      await FlutterTimezone.getLocalTimezone();
     } catch (_) {
       // Keep default label when timezone is unavailable.
     }
@@ -425,10 +453,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final year = date.year.toString().padLeft(4, '0');
-    final month = date.month.toString().padLeft(2, '0');
-    final day = date.day.toString().padLeft(2, '0');
-    return '$year-$month-$day';
+    return ProgressResetService.formatDate(date);
   }
 
   String _formatTime(DateTime time) {
