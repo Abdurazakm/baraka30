@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For Haptic Feedback
+import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DhikrScreen extends StatefulWidget {
   const DhikrScreen({super.key});
@@ -9,8 +10,11 @@ class DhikrScreen extends StatefulWidget {
 }
 
 class _DhikrScreenState extends State<DhikrScreen> {
+  static const String _vibrationPrefKey = 'dhikr_vibration_enabled';
+
   int _counter = 0;
   String _selectedDhikr = "SubhanAllah";
+  bool _vibrationEnabled = true;
   final List<DhikrOption> _options = [
     const DhikrOption(
       label: "SubhanAllah",
@@ -180,8 +184,32 @@ class _DhikrScreenState extends State<DhikrScreen> {
     const DhikrOption(label: "Custom"),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _loadVibrationPreference();
+  }
+
+  Future<void> _loadVibrationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool(_vibrationPrefKey) ?? true;
+    if (mounted) {
+      setState(() => _vibrationEnabled = enabled);
+    }
+  }
+
+  Future<void> _toggleVibration() async {
+    final next = !_vibrationEnabled;
+    setState(() => _vibrationEnabled = next);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_vibrationPrefKey, next);
+  }
+
   void _incrementCounter() {
-    HapticFeedback.mediumImpact(); // Mimics the "click" of a bead
+    if (_vibrationEnabled) {
+      HapticFeedback.mediumImpact();
+      HapticFeedback.vibrate();
+    }
     setState(() {
       _counter++;
     });
@@ -204,6 +232,15 @@ class _DhikrScreenState extends State<DhikrScreen> {
       appBar: AppBar(
         title: const Text("Tasbih"),
         actions: [
+          IconButton(
+            icon: Icon(
+              _vibrationEnabled ? Icons.vibration : Icons.vibration_outlined,
+            ),
+            tooltip: _vibrationEnabled
+                ? 'Vibration: On'
+                : 'Vibration: Off',
+            onPressed: _toggleVibration,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {

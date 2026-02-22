@@ -506,18 +506,7 @@ class HomeScreenState extends State<HomeScreen> {
                       style: theme.textTheme.bodyMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      _localTimeZoneLabel.isEmpty
-                          ? strings.localTime()
-                          : _localTimeZoneLabel,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.black54,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    )
                   ],
                 ),
               ),

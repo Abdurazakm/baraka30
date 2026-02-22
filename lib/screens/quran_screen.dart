@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -33,6 +35,8 @@ class _QuranScreenState extends State<QuranScreen> {
   String _progressDateKey = '';
   String _progressMonthKey = '';
   int _pagesReadMonth = 0;
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
   String? _playingVerseKey;
@@ -53,10 +57,15 @@ class _QuranScreenState extends State<QuranScreen> {
     super.initState();
     _initData();
     _audioPlayer.onPlayerComplete.listen((_) => _handlePlayerComplete());
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 2),
+      (_) => _refreshProgressIfNeeded(),
+    );
   }
 
   @override
   void dispose() {
+    _refreshTimer?.cancel();
     _pageController.dispose();
     _audioPlayer.dispose();
     super.dispose();
@@ -189,6 +198,59 @@ class _QuranScreenState extends State<QuranScreen> {
         _prefs.getStringList('quran_pages_read_month') ?? <String>[];
     _progressMonthKey = monthKey;
     _pagesReadMonth = storedPages.length;
+  }
+
+  Future<void> _refreshProgressIfNeeded() async {
+    if (_isLoading || _isRefreshing) {
+      return;
+    }
+
+    _isRefreshing = true;
+    try {
+      final today = _formatDate(DateTime.now());
+      final storedDate = _prefs.getString('quran_progress_date') ?? '';
+      final monthKey = _formatMonth(DateTime.now());
+      final storedMonth = _prefs.getString('quran_progress_month') ?? '';
+      final rounds = _prefs.getInt('quran_rounds_goal') ?? _rounds;
+
+      if (storedDate != today) {
+        await _prefs.setString('quran_progress_date', today);
+        await _prefs.setStringList('quran_pages_read_today', <String>[]);
+        await _resetDailyChecklist();
+      }
+
+      if (storedMonth != monthKey) {
+        await _prefs.setString('quran_progress_month', monthKey);
+        await _prefs.setStringList('quran_pages_read_month', <String>[]);
+      }
+
+      final storedPages =
+          _prefs.getStringList('quran_pages_read_today') ?? <String>[];
+      final storedMonthPages =
+          _prefs.getStringList('quran_pages_read_month') ?? <String>[];
+      final dailyTarget = (rounds * 604) / 30;
+
+      final bool needsUpdate =
+          rounds != _rounds ||
+          storedPages.length != _pagesReadToday ||
+          storedMonthPages.length != _pagesReadMonth ||
+          dailyTarget != _dailyTargetPages ||
+          today != _progressDateKey ||
+          monthKey != _progressMonthKey;
+
+      if (needsUpdate && mounted) {
+        setState(() {
+          _rounds = rounds;
+          _pagesReadToday = storedPages.length;
+          _pagesReadMonth = storedMonthPages.length;
+          _dailyTargetPages = dailyTarget;
+          _progressDateKey = today;
+          _progressMonthKey = monthKey;
+        });
+      }
+    } finally {
+      _isRefreshing = false;
+    }
   }
 
   void _onPageChanged(int pageIndex) {
@@ -849,6 +911,131 @@ class _QuranScreenState extends State<QuranScreen> {
     }
   }
 
+  Future<void> _showVerseQuickActions({
+    required int surahNumber,
+    required int verseNumber,
+    required String arabicText,
+  }) async {
+    final key = _verseKey(surahNumber, verseNumber);
+    final isHighlighted = _highlightedVerses.contains(key);
+    final isPlaying = _playingVerseKey == key;
+    final isContinuousPlaying = isPlaying && _isContinuousPlaybackActive;
+
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 16),
+            child: Wrap(
+              alignment: WrapAlignment.spaceEvenly,
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _buildQuickAction(
+                  icon: isHighlighted
+                      ? Icons.highlight_off
+                      : Icons.highlight,
+                  label: isHighlighted ? 'Unhighlight' : 'Highlight',
+                  onTap: () => Navigator.pop(context, 'highlight'),
+                ),
+                _buildQuickAction(
+                  icon: isPlaying
+                      ? Icons.stop_circle_outlined
+                      : Icons.play_circle_fill,
+                  label: isPlaying ? 'Stop Audio' : 'Play Audio',
+                  onTap: () => Navigator.pop(context, 'audio'),
+                ),
+                _buildQuickAction(
+                  icon: isContinuousPlaying
+                      ? Icons.repeat_one_on
+                      : Icons.playlist_play,
+                  label: isContinuousPlaying
+                      ? 'Stop Continuous'
+                      : 'Play Continuously',
+                  onTap: () => Navigator.pop(context, 'continuous'),
+                ),
+                _buildQuickAction(
+                  icon: Icons.translate,
+                  label: 'Translation',
+                  onTap: () => Navigator.pop(context, 'translation'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || selected == null) {
+      return;
+    }
+
+    if (selected == 'highlight') {
+      await _toggleVerseHighlight(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
+      return;
+    }
+
+    if (selected == 'audio') {
+      await _toggleVerseAudio(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+      );
+      return;
+    }
+
+    if (selected == 'continuous') {
+      if (isContinuousPlaying) {
+        await _stopContinuousPlayback();
+      } else {
+        await _startContinuousPlayback(
+          surahNumber: surahNumber,
+          verseNumber: verseNumber,
+        );
+      }
+      return;
+    }
+
+    if (selected == 'translation') {
+      await _showVerseTranslation(
+        surahNumber: surahNumber,
+        verseNumber: verseNumber,
+        arabicText: arabicText,
+      );
+    }
+  }
+
+  Widget _buildQuickAction({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        width: 120,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 28),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _toggleBookmark() async {
     if (_bookmarkedPage == _currentPage) {
       await _prefs.remove('quran_bookmark');
@@ -1247,11 +1434,12 @@ class _QuranScreenState extends State<QuranScreen> {
                 color: Colors.black87,
                 backgroundColor: bgColor, // Highlight spans across line breaks
               ),
-              recognizer: LongPressGestureRecognizer()
-                ..onLongPress = () {
-                  _handleVerseLongPress(
+              recognizer: TapGestureRecognizer()
+                ..onTap = () {
+                  _showVerseQuickActions(
                     surahNumber: surahNumber,
                     verseNumber: v.verseNumber,
+                    arabicText: v.text,
                   );
                 },
             ),
@@ -1262,9 +1450,10 @@ class _QuranScreenState extends State<QuranScreen> {
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
               child: GestureDetector(
-                onTap: () => _handleVerseTap(
+                onTap: () => _showVerseQuickActions(
                   surahNumber: surahNumber,
                   verseNumber: v.verseNumber,
+                  arabicText: v.text,
                 ),
                 onLongPress: () => _handleVerseLongPress(
                   surahNumber: surahNumber,
