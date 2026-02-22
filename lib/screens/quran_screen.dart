@@ -869,25 +869,38 @@ class _QuranScreenState extends State<QuranScreen> {
       return;
     }
 
-    _pageController.jumpToPage(_bookmarkedPage - 1);
+    _jumpToPage(_bookmarkedPage);
+  }
+
+  void _jumpToPage(int pageNum) {
+    if (!_pageController.hasClients) {
+      return;
+    }
+
+    final targetIndex = _pageIndexForNumber(pageNum);
+    final currentIndex = _pageController.page?.round() ?? targetIndex;
+    final distance = (currentIndex - targetIndex).abs();
+    final durationMs = (200 + (distance * 10)).clamp(200, 1200);
+
+    _pageController.animateToPage(
+      targetIndex,
+      duration: Duration(milliseconds: durationMs),
+      curve: Curves.easeOutCubic,
+    );
+
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
   }
 
-  void _jumpToPage(int pageNum) {
-    _pageController.jumpToPage(_pageIndexForNumber(pageNum));
-    if (Navigator.canPop(context)) Navigator.pop(context);
-  }
-
   int _pageIndexForNumber(int pageNum) {
     final clamped = pageNum.clamp(1, 604);
-    return 604 - clamped;
+    return clamped - 1;
   }
 
   int _pageNumberForIndex(int index) {
     final clamped = index.clamp(0, 603);
-    return 604 - clamped;
+    return clamped + 1;
   }
 
   Future<void> _showPageSearchDialog() async {
@@ -924,7 +937,6 @@ class _QuranScreenState extends State<QuranScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    controller.dispose();
                     Navigator.pop(context);
                   },
                   child: const Text('Cancel'),
@@ -938,7 +950,6 @@ class _QuranScreenState extends State<QuranScreen> {
                       });
                       return;
                     }
-                    controller.dispose();
                     Navigator.pop(context, page);
                   },
                   child: const Text('Go'),
@@ -966,56 +977,22 @@ class _QuranScreenState extends State<QuranScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFFBF9F1),
       appBar: AppBar(
-        title: Text(
-          'Page $_currentPage',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.manage_search),
+              tooltip: 'Go to Page',
+              onPressed: _showPageSearchDialog,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Page $_currentPage',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.manage_search),
-            tooltip: 'Go to Page',
-            onPressed: _showPageSearchDialog,
-          ),
-          IconButton(
-            icon: const Icon(Icons.download_for_offline),
-            tooltip: 'Offline Downloads',
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DownloadsScreen()),
-              );
-              if (result == true) {
-                await _reloadDownloadPrefs();
-              }
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_added_outlined),
-            tooltip: 'Go to Bookmark',
-            onPressed: _jumpToBookmark,
-          ),
-          IconButton(
-            icon: Icon(
-              _showTranslation ? Icons.g_translate : Icons.translate_outlined,
-            ),
-            onPressed: _toggleTranslation,
-            tooltip: 'Toggle Translation',
-          ),
-          IconButton(
-            icon: Icon(
-              _preferContinuousPlayback ? Icons.repeat_on : Icons.repeat,
-              color: _preferContinuousPlayback ? Colors.green : null,
-            ),
-            tooltip: _preferContinuousPlayback
-                ? 'Continuous Tap Play: ON'
-                : 'Continuous Tap Play: OFF',
-            onPressed: _toggleContinuousPlayPreference,
-          ),
-          IconButton(
-            icon: const Icon(Icons.language),
-            tooltip: 'Translation Language',
-            onPressed: _showTranslationLanguagePicker,
-          ),
           IconButton(
             icon: Icon(
               _bookmarkedPage == _currentPage
@@ -1023,7 +1000,77 @@ class _QuranScreenState extends State<QuranScreen> {
                   : Icons.bookmark_border,
               color: _bookmarkedPage == _currentPage ? Colors.amber : null,
             ),
+            tooltip: _bookmarkedPage == _currentPage
+                ? 'Remove Bookmark'
+                : 'Save Bookmark',
             onPressed: _toggleBookmark,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              switch (value) {
+                case 'go_page':
+                  await _showPageSearchDialog();
+                  break;
+                case 'downloads':
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const DownloadsScreen(),
+                    ),
+                  );
+                  if (result == true) {
+                    await _reloadDownloadPrefs();
+                  }
+                  break;
+                case 'bookmark_jump':
+                  _jumpToBookmark();
+                  break;
+                case 'translation_toggle':
+                  _toggleTranslation();
+                  break;
+                case 'continuous_toggle':
+                  await _toggleContinuousPlayPreference();
+                  break;
+                case 'language_picker':
+                  await _showTranslationLanguagePicker();
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'go_page',
+                child: Text('Go to Page'),
+              ),
+              const PopupMenuItem(
+                value: 'downloads',
+                child: Text('Offline Downloads'),
+              ),
+              const PopupMenuItem(
+                value: 'bookmark_jump',
+                child: Text('Go to Bookmark'),
+              ),
+              PopupMenuItem(
+                value: 'translation_toggle',
+                child: Text(
+                  _showTranslation
+                      ? 'Hide Translation'
+                      : 'Show Translation',
+                ),
+              ),
+              PopupMenuItem(
+                value: 'continuous_toggle',
+                child: Text(
+                  _preferContinuousPlayback
+                      ? 'Continuous Tap Play: On'
+                      : 'Continuous Tap Play: Off',
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'language_picker',
+                child: Text('Translation Language'),
+              ),
+            ],
           ),
         ],
       ),

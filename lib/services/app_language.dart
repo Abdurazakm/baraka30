@@ -431,7 +431,7 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'retry': 'ደግመው ይሞክሩ',
     'location_settings': 'የአካባቢ ቅንብሮች',
     'app_settings': 'የመተግበሪያ ቅንብሮች',
-    'sunnah_tip_morning': 'ሱና፡ በጾም ጊዜ የስር ንፁህነትን ለመጠበቅ ሚስዋክ ይጠቀሙ።',
+    'sunnah_tip_morning': 'ሱና፡ በጾም ወቅት የአፍዎን ጠረን ለመጠበቅ ሚስዋክ ይጠቀሙ።',
     'sunnah_tip_evening': 'ሱና፡ ጾምዎን በዘንባባ እና በውሃ ያፍቱ።',
     'checklist_fajr': 'ፈጅር + {pages} ገጾች አንብብ',
     'checklist_dhuhr': 'ዙህር + {pages} ገጾች አንብብ',
