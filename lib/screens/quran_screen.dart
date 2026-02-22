@@ -38,6 +38,7 @@ class _QuranScreenState extends State<QuranScreen> {
   String _progressMonthKey = '';
   int _pagesReadMonth = 0;
   int? _returnReadingPage;
+  int? _programmaticTargetPage;
   Timer? _refreshTimer;
   bool _isRefreshing = false;
 
@@ -228,7 +229,28 @@ class _QuranScreenState extends State<QuranScreen> {
 
   void _onPageChanged(int pageIndex) {
     int pageNum = _pageNumberForIndex(pageIndex);
-    setState(() => _currentPage = pageNum);
+    final previousPage = _currentPage;
+    final wasProgrammatic = _programmaticTargetPage != null;
+    if (_programmaticTargetPage == pageNum) {
+      _programmaticTargetPage = null;
+    }
+
+    int? nextReturnReadingPage;
+    if (!wasProgrammatic && previousPage != pageNum) {
+      final readPages =
+          _prefs.getStringList('quran_pages_read_today') ?? <String>[];
+      final isAlreadyFinishedPage = readPages.contains(pageNum.toString());
+      if (isAlreadyFinishedPage) {
+        nextReturnReadingPage = previousPage;
+      }
+    }
+
+    setState(() {
+      _currentPage = pageNum;
+      if (nextReturnReadingPage != null) {
+        _returnReadingPage = nextReturnReadingPage;
+      }
+    });
     _prefs.setInt('quran_current_page', pageNum);
     _trackPageRead(pageNum);
     _prefetchOfflineTranslationsForPage(pageNum);
@@ -592,6 +614,7 @@ class _QuranScreenState extends State<QuranScreen> {
         _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
     final distance = (currentIndex - targetIndex).abs();
     final durationMs = (180 + (distance * 10)).clamp(180, 900);
+    _programmaticTargetPage = targetPage;
 
     await _pageController.animateToPage(
       targetIndex,
@@ -1068,6 +1091,7 @@ class _QuranScreenState extends State<QuranScreen> {
     final currentIndex = _pageController.page?.round() ?? targetIndex;
     final distance = (currentIndex - targetIndex).abs();
     final durationMs = (200 + (distance * 10)).clamp(200, 1200);
+    _programmaticTargetPage = targetPage;
 
     _pageController.animateToPage(
       targetIndex,
