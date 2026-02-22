@@ -189,8 +189,8 @@ class AppStrings {
   String scopeJuz() => t('scope_juz');
   String scopeAll() => t('scope_all');
   String juzLabel(int juz) => t('juz_label', vars: {'juz': juz.toString()});
-    String vibrationOn() => t('vibration_on');
-    String vibrationOff() => t('vibration_off');
+  String vibrationOn() => t('vibration_on');
+  String vibrationOff() => t('vibration_off');
   String selectSurahs() => t('select_surahs');
   String selectJuz() => t('select_juz');
   String translations() => t('translations');
@@ -354,8 +354,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'scope_juz': 'Juz',
     'scope_all': 'All',
     'juz_label': 'Juz {juz}',
-      'vibration_on': 'Vibration: On',
-      'vibration_off': 'Vibration: Off',
+    'vibration_on': 'Vibration: On',
+    'vibration_off': 'Vibration: Off',
     'select_surahs': 'Select Surahs',
     'select_juz': 'Select Juz',
     'translations': 'Translations',
@@ -406,7 +406,7 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'continuous_tap_play_off': 'Continuous Tap Play: Off',
     'jump_to_any_page': 'Jump to any page (1-604)',
     'accidental_surah_opened_hint':
-      'Opened a new surah page. Tap to return to your reading.',
+        'Opened a new surah page. Tap to return to your reading.',
     'return_to_previous_page_action': 'Back to reading',
     'back_to_reading_page_label': 'Back to reading page (Pg {page})',
     'go_to_reading': 'Go to Reading',
@@ -508,8 +508,8 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'scope_juz': 'ጁዝ',
     'scope_all': 'ሁሉም',
     'juz_label': 'ጁዝ {juz}',
-      'vibration_on': 'ንዝረት: በርቷል',
-      'vibration_off': 'ንዝረት: ጠፍቷል',
+    'vibration_on': 'ንዝረት: በርቷል',
+    'vibration_off': 'ንዝረት: ጠፍቷል',
     'select_surahs': 'ሱራዎችን ይምረጡ',
     'select_juz': 'ጁዝ ይምረጡ',
     'translations': 'ትርጉሞች',
@@ -558,8 +558,7 @@ const Map<AppLanguage, Map<String, String>> _strings = {
     'continuous_tap_play_on': 'በመንካት ቀጥታ ማጫወት: በርቷል',
     'continuous_tap_play_off': 'በመንካት ቀጥታ ማጫወት: ጠፍቷል',
     'jump_to_any_page': 'ወደ ማንኛውም ገጽ ይሂዱ (1-604)',
-    'accidental_surah_opened_hint':
-      'አዲስ የሱራ ገጽ ተከፍቷል። ወደ ንባብዎ ለመመለስ ይንኩ።',
+    'accidental_surah_opened_hint': 'አዲስ የሱራ ገጽ ተከፍቷል። ወደ ንባብዎ ለመመለስ ይንኩ።',
     'return_to_previous_page_action': 'ወደ ንባብ ተመለስ',
     'back_to_reading_page_label': 'ወደ ንባብ ገጽ ተመለስ (ገጽ {page})',
     'go_to_reading': 'ወደ ንባብ ሂድ',

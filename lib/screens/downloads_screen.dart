@@ -111,17 +111,17 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     final strings = AppStrings.of(context);
 
     if (_isWeb) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.offlineNotSupportedWeb())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.offlineNotSupportedWeb())));
       return;
     }
 
     final surahs = _getSelectedSurahs();
     if (surahs.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.selectAtLeastOne())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.selectAtLeastOne())));
       return;
     }
 
@@ -381,7 +381,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(strings.audio(), style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          strings.audio(),
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           initialValue: _activeReciterKey,

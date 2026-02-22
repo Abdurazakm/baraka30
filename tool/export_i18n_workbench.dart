@@ -17,7 +17,9 @@ void main() {
   final amharicBlock = _extractLanguageBlock(source, 'amharic');
 
   if (englishBlock == null || amharicBlock == null) {
-    stderr.writeln('Could not parse AppLanguage string maps from app_language.dart');
+    stderr.writeln(
+      'Could not parse AppLanguage string maps from app_language.dart',
+    );
     exitCode = 1;
     return;
   }

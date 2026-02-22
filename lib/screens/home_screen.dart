@@ -484,9 +484,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   String _formatTime(DateTime time) {
     final hour24 = time.hour;
-    final hour12 = (hour24 % 12 == 0 ? 12 : hour24 % 12)
-        .toString()
-        .padLeft(2, '0');
+    final hour12 = (hour24 % 12 == 0 ? 12 : hour24 % 12).toString().padLeft(
+      2,
+      '0',
+    );
     final minute = time.minute.toString().padLeft(2, '0');
     final period = hour24 >= 12 ? 'PM' : 'AM';
     return '$hour12:$minute $period';

@@ -432,9 +432,9 @@ class _QuranScreenState extends State<QuranScreen> {
       }
       final strings = AppStrings.of(context);
       setState(() => _playingVerseKey = null);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.couldNotPlayVerse())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.couldNotPlayVerse())));
     } finally {
       if (mounted) {
         setState(() => _isAudioBusy = false);
@@ -649,9 +649,9 @@ class _QuranScreenState extends State<QuranScreen> {
         _playingVerseKey = null;
         _isContinuousPlaybackActive = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(strings.couldNotContinue())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(strings.couldNotContinue())));
     }
   }
 
@@ -823,7 +823,9 @@ class _QuranScreenState extends State<QuranScreen> {
                       ? Icons.stop_circle_outlined
                       : Icons.play_circle_fill,
                 ),
-                title: Text(isPlaying ? strings.stopAudio() : strings.playAudio()),
+                title: Text(
+                  isPlaying ? strings.stopAudio() : strings.playAudio(),
+                ),
                 onTap: () => Navigator.pop(context, 'audio'),
               ),
               ListTile(
@@ -1047,14 +1049,12 @@ class _QuranScreenState extends State<QuranScreen> {
     if (!_pageController.hasClients) {
       return _currentPage;
     }
-    final index = _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
+    final index =
+        _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
     return _pageNumberForIndex(index);
   }
 
-  void _jumpToPage(
-    int pageNum, {
-    bool captureReadingPage = false,
-  }) {
+  void _jumpToPage(int pageNum, {bool captureReadingPage = false}) {
     if (!_pageController.hasClients) {
       return;
     }
@@ -1078,7 +1078,6 @@ class _QuranScreenState extends State<QuranScreen> {
     if (Navigator.canPop(context)) {
       Navigator.pop(context);
     }
-
   }
 
   void _jumpToReadingPage() {
@@ -1206,8 +1205,8 @@ class _QuranScreenState extends State<QuranScreen> {
               color: _bookmarkedPage == _currentPage ? Colors.amber : null,
             ),
             tooltip: _bookmarkedPage == _currentPage
-              ? strings.removeBookmark()
-              : strings.saveBookmark(),
+                ? strings.removeBookmark()
+                : strings.saveBookmark(),
             onPressed: _toggleBookmark,
           ),
           PopupMenuButton<String>(
@@ -1697,7 +1696,8 @@ class _QuranScreenState extends State<QuranScreen> {
             'DAILY',
             dailyProgress,
             '$_pagesReadToday / ${dailyTarget.toStringAsFixed(1)}',
-            action: (_returnReadingPage != null &&
+            action:
+                (_returnReadingPage != null &&
                     _returnReadingPage != _currentPage)
                 ? TextButton(
                     onPressed: _jumpToReadingPage,
@@ -1751,10 +1751,7 @@ class _QuranScreenState extends State<QuranScreen> {
                   trailing,
                   style: const TextStyle(fontSize: 10, color: Colors.grey),
                 ),
-                if (action != null) ...[
-                  const SizedBox(width: 6),
-                  action,
-                ],
+                if (action != null) ...[const SizedBox(width: 6), action],
               ],
             ),
           ],

@@ -4,37 +4,44 @@ import '../services/app_language.dart';
 const List<DailyText> _hadithEnglish = [
   DailyText(
     title: 'Hadith of the Day',
-    text: 'Actions are judged by intentions, and every person will get the reward according to what they intended.',
+    text:
+        'Actions are judged by intentions, and every person will get the reward according to what they intended.',
     source: 'Bukhari & Muslim',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'The most beloved deeds to Allah are those that are most consistent, even if small.',
+    text:
+        'The most beloved deeds to Allah are those that are most consistent, even if small.',
     source: 'Bukhari & Muslim',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'Whoever believes in Allah and the Last Day should speak good or remain silent.',
+    text:
+        'Whoever believes in Allah and the Last Day should speak good or remain silent.',
     source: 'Bukhari & Muslim',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'The strong person is not the one who overcomes people by strength, but the one who controls himself while in anger.',
+    text:
+        'The strong person is not the one who overcomes people by strength, but the one who controls himself while in anger.',
     source: 'Bukhari & Muslim',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'None of you truly believes until he loves for his brother what he loves for himself.',
+    text:
+        'None of you truly believes until he loves for his brother what he loves for himself.',
     source: 'Bukhari & Muslim',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'The merciful are shown mercy by the Most Merciful. Be merciful to those on earth and the One above the heavens will be merciful to you.',
+    text:
+        'The merciful are shown mercy by the Most Merciful. Be merciful to those on earth and the One above the heavens will be merciful to you.',
     source: 'Tirmidhi',
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'Whoever relieves a believer of hardship in this world, Allah will relieve him of hardship on the Day of Resurrection.',
+    text:
+        'Whoever relieves a believer of hardship in this world, Allah will relieve him of hardship on the Day of Resurrection.',
     source: 'Muslim',
   ),
   DailyText(
@@ -64,7 +71,8 @@ const List<DailyText> _hadithEnglish = [
   ),
   DailyText(
     title: 'Hadith of the Day',
-    text: 'Whoever treads a path seeking knowledge, Allah will make easy for him a path to Paradise.',
+    text:
+        'Whoever treads a path seeking knowledge, Allah will make easy for him a path to Paradise.',
     source: 'Muslim',
   ),
 ];
@@ -105,16 +113,8 @@ const List<DailyText> _hadithAmharic = [
     text: 'በዚህ ዓለም ከሙእሚን አንድ ችግር ያስወገደ ሰው፣ አላህ በትንሣኤ ቀን ከችግሮቹ ያስወግደዋል።',
     source: 'ሙስሊም',
   ),
-  DailyText(
-    title: 'የዛሬ ሐዲስ',
-    text: 'ንፅህና የእምነት ግማሽ ናት።',
-    source: 'ሙስሊም',
-  ),
-  DailyText(
-    title: 'የዛሬ ሐዲስ',
-    text: 'መልካም ቃል ሰደቃ ነው።',
-    source: 'ቡኻሪ እና ሙስሊም',
-  ),
+  DailyText(title: 'የዛሬ ሐዲስ', text: 'ንፅህና የእምነት ግማሽ ናት።', source: 'ሙስሊም'),
+  DailyText(title: 'የዛሬ ሐዲስ', text: 'መልካም ቃል ሰደቃ ነው።', source: 'ቡኻሪ እና ሙስሊም'),
   DailyText(
     title: 'የዛሬ ሐዲስ',
     text: 'ለሰዎች የማያመሰግን ሰው ለአላህም አያመሰግንም።',

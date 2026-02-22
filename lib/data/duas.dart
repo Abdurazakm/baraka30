@@ -4,22 +4,26 @@ import '../services/app_language.dart';
 const List<DailyText> _duasEnglish = [
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, grant us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.',
+    text:
+        'Our Lord, grant us good in this world and good in the Hereafter, and protect us from the punishment of the Fire.',
     source: 'Quran 2:201',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'O Allah, You are Pardoning and Generous, and You love to pardon, so pardon us.',
+    text:
+        'O Allah, You are Pardoning and Generous, and You love to pardon, so pardon us.',
     source: 'Hadith',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'O Allah, help me remember You, thank You, and worship You in the best way.',
+    text:
+        'O Allah, help me remember You, thank You, and worship You in the best way.',
     source: 'Hadith',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, do not let our hearts deviate after You have guided us, and grant us mercy from Yourself.',
+    text:
+        'Our Lord, do not let our hearts deviate after You have guided us, and grant us mercy from Yourself.',
     source: 'Quran 3:8',
   ),
   DailyText(
@@ -29,17 +33,20 @@ const List<DailyText> _duasEnglish = [
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, pour upon us patience, make our steps firm, and grant us victory over the disbelieving people.',
+    text:
+        'Our Lord, pour upon us patience, make our steps firm, and grant us victory over the disbelieving people.',
     source: 'Quran 2:250',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, forgive us, our parents, and the believers on the Day the account is established.',
+    text:
+        'Our Lord, forgive us, our parents, and the believers on the Day the account is established.',
     source: 'Quran 14:41',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'O Ever-Living, O Sustainer, by Your mercy I seek relief. Set right all my affairs and do not leave me to myself even for the blink of an eye.',
+    text:
+        'O Ever-Living, O Sustainer, by Your mercy I seek relief. Set right all my affairs and do not leave me to myself even for the blink of an eye.',
     source: 'Hadith',
   ),
   DailyText(
@@ -49,22 +56,26 @@ const List<DailyText> _duasEnglish = [
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'O Allah, make the Quran the spring of my heart, the light of my chest, and the remover of my sorrow and anxiety.',
+    text:
+        'O Allah, make the Quran the spring of my heart, the light of my chest, and the remover of my sorrow and anxiety.',
     source: 'Hadith',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, grant us from among our spouses and offspring comfort to our eyes and make us leaders for the righteous.',
+    text:
+        'Our Lord, grant us from among our spouses and offspring comfort to our eyes and make us leaders for the righteous.',
     source: 'Quran 25:74',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'Our Lord, accept from us. Indeed, You are the All-Hearing, the All-Knowing.',
+    text:
+        'Our Lord, accept from us. Indeed, You are the All-Hearing, the All-Knowing.',
     source: 'Quran 2:127',
   ),
   DailyText(
     title: 'Dua of the Day',
-    text: 'My Lord, forgive and have mercy, and You are the best of the merciful.',
+    text:
+        'My Lord, forgive and have mercy, and You are the best of the merciful.',
     source: 'Quran 23:118',
   ),
 ];
@@ -107,7 +118,8 @@ const List<DailyText> _duasAmharic = [
   ),
   DailyText(
     title: 'የዛሬ ዱዓ',
-    text: 'ሕያው እና ሁሉን የሚያቆም ጌታ ሆይ፣ በምሕረትህ እገዛን እጠይቃለሁ፤ ጉዳዬን ሁሉ አስተካክልልኝ እና ለአፍታም ለራሴ አትተወኝ።',
+    text:
+        'ሕያው እና ሁሉን የሚያቆም ጌታ ሆይ፣ በምሕረትህ እገዛን እጠይቃለሁ፤ ጉዳዬን ሁሉ አስተካክልልኝ እና ለአፍታም ለራሴ አትተወኝ።',
     source: 'ሐዲስ',
   ),
   DailyText(
