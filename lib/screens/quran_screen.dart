@@ -598,7 +598,8 @@ class _QuranScreenState extends State<QuranScreen> {
     }
 
     final targetIndex = _pageIndexForNumber(targetPage);
-    final currentIndex = _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
+    final currentIndex =
+        _pageController.page?.round() ?? _pageIndexForNumber(_currentPage);
     final distance = (currentIndex - targetIndex).abs();
     final durationMs = (180 + (distance * 10)).clamp(180, 900);
 
@@ -920,9 +921,7 @@ class _QuranScreenState extends State<QuranScreen> {
               runSpacing: 12,
               children: [
                 _buildQuickAction(
-                  icon: isHighlighted
-                      ? Icons.highlight_off
-                      : Icons.highlight,
+                  icon: isHighlighted ? Icons.highlight_off : Icons.highlight,
                   label: isHighlighted ? 'Unhighlight' : 'Highlight',
                   onTap: () => Navigator.pop(context, 'highlight'),
                 ),
@@ -1188,9 +1187,7 @@ class _QuranScreenState extends State<QuranScreen> {
                 case 'downloads':
                   final result = await Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const DownloadsScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const DownloadsScreen()),
                   );
                   if (result == true) {
                     await _reloadDownloadPrefs();
@@ -1211,10 +1208,7 @@ class _QuranScreenState extends State<QuranScreen> {
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'go_page',
-                child: Text('Go to Page'),
-              ),
+              const PopupMenuItem(value: 'go_page', child: Text('Go to Page')),
               const PopupMenuItem(
                 value: 'downloads',
                 child: Text('Offline Downloads'),
@@ -1226,9 +1220,7 @@ class _QuranScreenState extends State<QuranScreen> {
               PopupMenuItem(
                 value: 'translation_toggle',
                 child: Text(
-                  _showTranslation
-                      ? 'Hide Translation'
-                      : 'Show Translation',
+                  _showTranslation ? 'Hide Translation' : 'Show Translation',
                 ),
               ),
               PopupMenuItem(

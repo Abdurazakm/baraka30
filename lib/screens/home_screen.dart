@@ -531,7 +531,7 @@ class HomeScreenState extends State<HomeScreen> {
                       style: theme.textTheme.bodyMedium,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    )
+                    ),
                   ],
                 ),
               ),

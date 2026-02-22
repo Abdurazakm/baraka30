@@ -236,9 +236,7 @@ class _DhikrScreenState extends State<DhikrScreen> {
             icon: Icon(
               _vibrationEnabled ? Icons.vibration : Icons.vibration_outlined,
             ),
-            tooltip: _vibrationEnabled
-                ? 'Vibration: On'
-                : 'Vibration: Off',
+            tooltip: _vibrationEnabled ? 'Vibration: On' : 'Vibration: Off',
             onPressed: _toggleVibration,
           ),
           IconButton(
