@@ -13,19 +13,24 @@ The app helps both groups build a simple, repeatable routine with progress track
 ## Who this app is for
 
 ### 1) Beginner or inconsistent reader
+
 Use Baraka30 if you are asking:
+
 - “Where do I start?”
 - “How much should I read today?”
 - “How do I keep going every day?”
 
 Baraka30 gives you:
+
 - a daily target,
 - a monthly target,
 - a checklist you can mark manually,
 - and a safe “Go to Reading” return button if you accidentally move away from your reading page.
 
 ### 2) Good reader but no plan
+
 Use Baraka30 if you can read Quran well but want:
+
 - clear Ramadan completion goals,
 - page-based tracking,
 - and accountability without over-complication.
@@ -35,6 +40,7 @@ Use Baraka30 if you can read Quran well but want:
 ## Main functionality
 
 ## Home page
+
 - Prayer timing section (12-hour format with AM/PM).
 - Daily inspiration cards:
   - Ayah of the Day,
@@ -44,6 +50,7 @@ Use Baraka30 if you can read Quran well but want:
 - Language-aware content for supported app languages.
 
 ## Quran page
+
 - Mushaf-style page reading (604 pages).
 - Default first-time open in Reading Mode (translation hidden by default).
 - Optional translation mode and translation language picker.
@@ -69,6 +76,7 @@ Use Baraka30 if you can read Quran well but want:
   - user can return in one tap.
 
 ## Planner page
+
 - Set Quran completion goal (number of rounds in Ramadan).
 - Automatically calculates:
   - daily pages target,
@@ -77,12 +85,14 @@ Use Baraka30 if you can read Quran well but want:
 - Shows daily and monthly progress against your selected goal.
 
 ## Dhikr page
+
 - Tap-based tasbih counter.
 - Supports multiple dhikr options.
 - Optional vibration feedback.
 - Quick reset flow.
 
 ## Offline downloads page
+
 - Download translation files by Surah, Juz, or all Surahs.
 - Download recitation audio.
 - Set preferred offline translation/reciter.
@@ -104,9 +114,11 @@ Use Baraka30 if you can read Quran well but want:
 The app has in-app language support and localized UI text.
 
 For maintainers/translators, Baraka30 includes a hybrid translation workflow:
+
 - machine translation draft + manual review.
 
 Files:
+
 - `assets/i18n/translation_workbench.csv`
 - `assets/i18n/translation_workbench.json`
 - `assets/i18n/README.md`
@@ -121,12 +133,14 @@ Regenerate translation workbench:
 ## Recommended usage path
 
 ### If you are a beginner
+
 1. Open Planner page and choose 1 round (or your comfortable goal).
 2. Open Quran page and read from Reading Mode.
 3. Watch Daily progress bar and complete your target pages.
 4. Use Home checklist to manually confirm prayer + worship routine.
 
 ### If you are already fluent
+
 1. Set a higher rounds goal in Planner.
 2. Use Quran page bookmark and page search for efficient flow.
 3. Use continuous playback for revision/listening sessions.
@@ -146,6 +160,7 @@ Regenerate translation workbench:
 ## Development
 
 ### Run
+
 1. Install Flutter SDK.
 2. From project root:
 
